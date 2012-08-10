@@ -102,6 +102,11 @@ class Scores(callbacks.Plugin):
                     game = game.replace('*', ircutils.mircColor('<>','red'))
                 game = game.replace('Half', ircutils.mircColor('H', 'yellow'))
                 game = game.replace('Final', ircutils.mircColor('F', 'red'))
+                game = game.replace('1st', ircutils.mircColor('1st', 'green'))
+                game = game.replace('2nd', ircutils.mircColor('2nd', 'green'))
+                game = game.replace('3rd', ircutils.mircColor('3rd', 'green'))
+                game = game.replace('4th', ircutils.mircColor('4th', 'green'))
+                
             
                 if " at " not in game: # handles games in progress.
                     gamesplit = game.split(' ') 
