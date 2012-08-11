@@ -57,7 +57,8 @@ class Scores(callbacks.Plugin):
 
 
     # start public functions. 
-    def nfl(self, irc, msg, args, optdate):
+    #def nfl(self, irc, msg, args, optdate):
+    def nfl(self, irc, msg, args):
         """
         Display NFL scores.
         """
@@ -133,7 +134,8 @@ class Scores(callbacks.Plugin):
 
         irc.reply(allgames)
 
-    nfl = wrap(nfl, [optional('somethingWithoutSpaces')])
+    #nfl = wrap(nfl, [optional('somethingWithoutSpaces')])
+    nfl = wrap(nfl)
 
     
     def mlb(self, irc, msg, args, optdate):
@@ -172,7 +174,7 @@ class Scores(callbacks.Plugin):
 
         for row in rows:
             game = row.find('a').text.strip() # rather simple parse here.
-            game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC') # teams.
+            game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
             game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','')
             game = game.replace('Del', ircutils.mircColor('DLY', 'yellow'))
             
