@@ -62,23 +62,12 @@ class Scores(callbacks.Plugin):
         """
         Display NFL scores.
         """
-    
-        if optdate:
-            testdate = self._validate(optdate, '%Y%m%d')
-            if not testdate:
-                irc.reply("Invalid year. Must be YYYYmmdd.")
-                return
-        #else:
-        #    optdate = datetime.datetime.now().strftime("%Y%m%d")
-
+        
         url = 'nfl/scoreboard?'
-
-        if optdate:
-            url += 'date=%s' % optdate
-
         html = self._fetch(url)
+        
         if html == 'None':
-            irc.reply("Cannot fetch mlb scores.")
+            irc.reply("Cannot fetch NFL scores.")
             return
             
         html = html.replace('class="ind alt', 'class="ind')
@@ -95,7 +84,7 @@ class Scores(callbacks.Plugin):
         for div in divs:
             rows = div.findAll('a')
             for row in rows:
-                game = row.text.strip() # rather simple parse here.
+                game = row.text.strip()
                 game = game.replace(', NFL','').replace(', ESPN', '')
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}):
                     game = game.replace('*', ircutils.mircColor('<RZ>','red'))
