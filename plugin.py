@@ -164,7 +164,7 @@ class Scores(callbacks.Plugin):
         for row in rows:
             game = row.find('a').text.strip() # rather simple parse here.
             game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
-            game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','')
+            game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','').replace(', ESP2', '')
             game = game.replace('Del', ircutils.mircColor('DLY', 'yellow'))
             
             if " at " not in game: # handles games in progress.
