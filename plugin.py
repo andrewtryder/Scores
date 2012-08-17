@@ -85,7 +85,7 @@ class Scores(callbacks.Plugin):
             rows = div.findAll('a')
             for row in rows:
                 game = row.text.strip()
-                game = game.replace(', NFL','').replace(', ESPN', '')
+                game = game.replace(', NFL','').replace(', ESPN', '').replace(', FOX','').replace(', CBS','').replace(', NBC','')
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}):
                     game = game.replace('*', ircutils.mircColor('<RZ>','red'))
                 else:
