@@ -41,13 +41,17 @@ class Scores(callbacks.Plugin):
         import base64
         return base64.b64decode(string)
 
+    def _dateFmt(self, string):
+        """Return a short date string from a full date string.""" # # Saturday, September 1
+        return time.strftime('%m/%d', time.strptime(string, '%A, %B %d'))
+
     def _fetch(self, optargs):
         """Internal function to fetch what we need."""
         
-        url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs.lower()
+        url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         
-        #self.log.info(url)
-        
+        self.log.info(url)
+                
         try:
             req = urllib2.Request(url)
             html = (urllib2.urlopen(req)).read()
@@ -56,8 +60,89 @@ class Scores(callbacks.Plugin):
             return None
 
 
-    # start public functions. 
-    #def nfl(self, irc, msg, args, optdate):
+    ###########################
+    # start public functions. #
+    ###########################
+
+    def cfb(self, irc, msg, args, optconf):
+        """<conference>
+        Display CFB scores.
+        """
+        
+        validconfs = { 'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big12':'4',
+                'bigsky':'20', 'caa':'48', 'c-usa':'12', 'greatwest':'43', 'independent':'18',
+                'ivy':'22', 'mac':'15', 'meac':'24', 'mvc':'21', 'i-a':'80',
+                'i-aa':'81', 'nec':'25', 'pac12':'9', 'pioneer':'28', 'southern':'29', 'sec':'8',
+                'sunbelt':'37', 'wac':'16'
+        }
+        
+        if optconf:
+            optconf = optconf.lower()        
+            if optconf not in validconfs:
+                irc.reply("Conference must be one of: %s" % validconfs.keys())
+                return
+            
+        url = 'ncf/scoreboard?'
+        if not optconf:
+            url += 'groupId=%s' % validconfs['top25']
+        else:
+            url += 'groupId=%s' % validconfs[optconf]
+                        
+        html = self._fetch(url)
+        
+        if html == 'None':
+            irc.reply("Cannot fetch NFL scores.")
+            return
+
+        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','')
+        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','')
+
+        soup = BeautifulSoup(html)
+        divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
+
+        append_list = []
+
+        for div in divs:
+            rows = div.findAll('a')
+            for row in rows:
+                game = row.text.strip()
+                
+                # rz/pos display
+                if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}): 
+                    game = game.replace('*', ircutils.mircColor('<RZ>','red'))
+                else:
+                    game = game.replace('*', ircutils.mircColor('<>','red'))
+                
+                if " at " not in game: # handles games in progress.
+                    gamesplit = game.split(' ') 
+                    awayteam = gamesplit[0]
+                    awayscore = gamesplit[1]
+                    hometeam = gamesplit[2]
+                    homescore = gamesplit[3]
+                    time = gamesplit[4:]
+                    time = " ".join(time)
+                    
+                    # bold the leader
+                    if int(awayscore) > int(homescore):
+                        awayteam = ircutils.bold(awayteam)
+                        awayscore = ircutils.bold(awayscore)
+                    elif int(homescore) > int(awayscore):
+                        hometeam = ircutils.bold(hometeam)
+                        homescore = ircutils.bold(homescore)
+                
+                    game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
+
+                append_list.append(game)
+                #date = game.findPrevious('div', attrs={'class':'sub dark bold break'})
+                #date = _dateFmt(date.getText())
+       
+        allgames = string.join([item for item in append_list], " | ")
+
+        irc.reply(allgames)
+        
+    cfb = wrap(cfb, [optional('somethingWithoutSpaces')])
+    
+
     def nfl(self, irc, msg, args):
         """
         Display NFL scores.
