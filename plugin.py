@@ -50,7 +50,7 @@ class Scores(callbacks.Plugin):
         
         url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         
-        self.log.info(url)
+        #self.log.info(url)
                 
         try:
             req = urllib2.Request(url)
