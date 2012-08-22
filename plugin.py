@@ -69,10 +69,10 @@ class Scores(callbacks.Plugin):
         Display CFB scores.
         """
         
-        validconfs = { 'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big12':'4',
-                'bigsky':'20', 'caa':'48', 'c-usa':'12', 'greatwest':'43', 'independent':'18',
+        validconfs = { 'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big10':'5', 'big12':'4',
+                'bigsky':'20', 'caa':'48', 'c-usa':'12', 'independent':'18',
                 'ivy':'22', 'mac':'15', 'meac':'24', 'mvc':'21', 'i-a':'80',
-                'i-aa':'81', 'nec':'25', 'pac12':'9', 'pioneer':'28', 'southern':'29', 'sec':'8',
+                'i-aa':'81', 'pac12':'9', 'southern':'29', 'sec':'8',
                 'sunbelt':'37', 'wac':'16'
         }
         
