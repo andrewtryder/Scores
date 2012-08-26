@@ -42,7 +42,7 @@ class Scores(callbacks.Plugin):
         return base64.b64decode(string)
 
     def _dateFmt(self, string):
-        """Return a short date string from a full date string.""" # # Saturday, September 1
+        """Return a short date string from a full date string."""
         return time.strftime('%m/%d', time.strptime(string, '%A, %B %d'))
 
     def _fetch(self, optargs):
@@ -113,7 +113,7 @@ class Scores(callbacks.Plugin):
                 else:
                     game = game.replace('*', ircutils.mircColor('<>','red'))
                 
-                if " at " not in game: # handles games in progress.
+                if " at " not in game: 
                     gamesplit = game.split(' ') 
                     awayteam = gamesplit[0]
                     awayscore = gamesplit[1]
@@ -122,7 +122,6 @@ class Scores(callbacks.Plugin):
                     time = gamesplit[4:]
                     time = " ".join(time)
                     
-                    # bold the leader
                     if int(awayscore) > int(homescore):
                         awayteam = ircutils.bold(awayteam)
                         awayscore = ircutils.bold(awayscore)
@@ -133,8 +132,6 @@ class Scores(callbacks.Plugin):
                     game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
 
                 append_list.append(game)
-                #date = game.findPrevious('div', attrs={'class':'sub dark bold break'})
-                #date = _dateFmt(date.getText())
        
         allgames = string.join([item for item in append_list], " | ")
 
@@ -183,7 +180,7 @@ class Scores(callbacks.Plugin):
                 game = game.replace('4th', ircutils.mircColor('4th', 'green'))
                 
             
-                if " at " not in game: # handles games in progress.
+                if " at " not in game: 
                     gamesplit = game.split(' ') 
                     awayteam = gamesplit[0]
                     awayscore = gamesplit[1]
@@ -208,7 +205,6 @@ class Scores(callbacks.Plugin):
 
         irc.reply(allgames)
 
-    #nfl = wrap(nfl, [optional('somethingWithoutSpaces')])
     nfl = wrap(nfl)
 
     
@@ -247,12 +243,12 @@ class Scores(callbacks.Plugin):
         object_list = []
 
         for row in rows:
-            game = row.find('a').text.strip() # rather simple parse here.
+            game = row.find('a').text.strip() 
             game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
             game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','').replace(', ESP2', '')
             game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow')).replace('Del', ircutils.mircColor('DLY', 'yellow')
             
-            if " at " not in game: # handles games in progress.
+            if " at " not in game: 
                 game = game.replace('Bot ','B').replace('Top ','T').replace('Mid ','M').replace('End ','E') # innings
                 game = game.replace('st','').replace('th','').replace('rd','').replace('nd','') # abbr
                 gamesplit = game.split(' ') 
@@ -262,7 +258,6 @@ class Scores(callbacks.Plugin):
                 homescore = gamesplit[3]
                 innings = gamesplit[4]
 
-                # bold the leader
                 if int(awayscore) > int(homescore):
                     awayteam = ircutils.bold(awayteam)
                     awayscore = ircutils.bold(awayscore)
