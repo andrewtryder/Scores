@@ -250,7 +250,7 @@ class Scores(callbacks.Plugin):
             game = row.find('a').text.strip() # rather simple parse here.
             game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
             game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','').replace(', ESP2', '')
-            game = game.replace('Del', ircutils.mircColor('DLY', 'yellow'))
+            game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
             
             if " at " not in game: # handles games in progress.
                 game = game.replace('Bot ','B').replace('Top ','T').replace('Mid ','M').replace('End ','E') # innings
