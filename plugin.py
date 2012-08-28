@@ -94,7 +94,7 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch NFL scores.")
             return
 
-        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','')
+        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','')
         html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','')
 
         soup = BeautifulSoup(html)
