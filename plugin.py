@@ -95,7 +95,7 @@ class Scores(callbacks.Plugin):
             return
 
         html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','')
-        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','')
+        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','').replace(', SEC','')
 
         soup = BeautifulSoup(html)
         divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
