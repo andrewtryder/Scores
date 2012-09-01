@@ -84,7 +84,7 @@ class Scores(callbacks.Plugin):
             
         url = 'ncf/scoreboard?'
         if not optconf:
-            url += 'groupId=%s' % validconfs['top25']
+            url += 'groupId=%s' % validconfs['i-a']
         else:
             url += 'groupId=%s' % validconfs[optconf]
                         
@@ -94,8 +94,8 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch NFL scores.")
             return
 
-        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','').replace(', LHN','')
-        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','').replace(', SEC','')
+        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','').replace(', LHN','').replace(', FX','')
+        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','').replace(', SEC','').replace(', CSTV','')
 
         soup = BeautifulSoup(html)
         divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
@@ -105,7 +105,7 @@ class Scores(callbacks.Plugin):
         for div in divs:
             rows = div.findAll('a')
             for row in rows:
-                game = row.text.strip()
+                game = row.text.strip().replace(';','')
                 
                 # rz/pos display
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}): 
@@ -122,16 +122,25 @@ class Scores(callbacks.Plugin):
                     time = gamesplit[4:]
                     time = " ".join(time)
                     
+                    time = time.replace('PPD', ircutils.mircColor('PPD', 'yellow')).replace('1st', ircutils.mircColor('1st', 'green'))
+                    time = time.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
+                    
                     if int(awayscore) > int(homescore):
                         awayteam = ircutils.bold(awayteam)
                         awayscore = ircutils.bold(awayscore)
                     elif int(homescore) > int(awayscore):
                         hometeam = ircutils.bold(hometeam)
                         homescore = ircutils.bold(homescore)
+                    
                 
                     game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
-
-                append_list.append(game)
+                
+                if not optconf: # by default, only show active I-A games.
+                    if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
+                        append_list.append(game)
+                else:
+                    game = game.replace('Final', ircutils.mircColor('F', 'red'))
+                    append_list.append(game)
        
         allgames = string.join([item for item in append_list], " | ")
 
@@ -167,13 +176,14 @@ class Scores(callbacks.Plugin):
             rows = div.findAll('a')
             for row in rows:
                 game = row.text.strip()
-                game = game.replace(', NFL','').replace(', ESPN', '').replace(', FOX','').replace(', CBS','').replace(', NBC','')
+                game = game.replace(', NFL','').replace(', ESPN', '').replace(', FOX','').replace(', CBS','').replace(', NBC','').replace(', ABC','')
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}):
                     game = game.replace('*', ircutils.mircColor('<RZ>','red'))
                 else:
                     game = game.replace('*', ircutils.mircColor('<>','red'))
                 game = game.replace('Half', ircutils.mircColor('H', 'yellow'))
                 game = game.replace('Final', ircutils.mircColor('F', 'red'))
+                game = game.replace('F/OT', ircutils.mircColor('F/OT', 'red'))
                 game = game.replace('1st', ircutils.mircColor('1st', 'green'))
                 game = game.replace('2nd', ircutils.mircColor('2nd', 'green'))
                 game = game.replace('3rd', ircutils.mircColor('3rd', 'green'))
