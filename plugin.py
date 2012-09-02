@@ -122,7 +122,7 @@ class Scores(callbacks.Plugin):
                     time = gamesplit[4:]
                     time = " ".join(time)
                     
-                    time = time.replace('PPD', ircutils.mircColor('PPD', 'yellow')).replace('1st', ircutils.mircColor('1st', 'green'))
+                    time = time.replace('PPD', ircutils.mircColor('PPD', 'yellow')).replace('1st', ircutils.mircColor('1st', 'green')).replace('Half', ircutils.mircColor('HT', 'yellow'))
                     time = time.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
                     
                     if int(awayscore) > int(homescore):
