@@ -63,6 +63,7 @@ class Scores(callbacks.Plugin):
     ###########################
     # start public functions. #
     ###########################
+    
 
     def cfb(self, irc, msg, args, optconf):
         """<conference>
@@ -141,11 +142,12 @@ class Scores(callbacks.Plugin):
                 else:
                     game = game.replace('Final', ircutils.mircColor('F', 'red'))
                     append_list.append(game)
-       
-        allgames = string.join([item for item in append_list], " | ")
-
-        irc.reply(allgames)
         
+        if len(append_list) > 0:       
+            irc.reply(string.join([item for item in append_list], " | "))
+        else:
+            irc.reply("No CFB games matched criteria.")
+            
     cfb = wrap(cfb, [optional('somethingWithoutSpaces')])
     
 
@@ -211,9 +213,10 @@ class Scores(callbacks.Plugin):
 
                 object_list.append(game)
 
-        allgames = string.join([item for item in object_list], " | ")
-
-        irc.reply(allgames)
+        if len(object_list) > 0:
+            irc.reply(string.join([item for item in object_list], " | "))
+        else:
+            irc.reply("No NFL games listed.")
 
     nfl = wrap(nfl)
 
@@ -226,10 +229,8 @@ class Scores(callbacks.Plugin):
         if optdate:
             testdate = self._validate(optdate, '%Y%m%d')
             if not testdate:
-                irc.reply("Invalid year. Must be YYYYmmdd.")
+                irc.reply("Invalid year. Must be YYYYmmdd. Ex: 20120904")
                 return
-        #else:
-        #    optdate = datetime.datetime.now().strftime("%Y%m%d")
 
         url = 'mlb/scoreboard?'
 
@@ -237,6 +238,7 @@ class Scores(callbacks.Plugin):
             url += 'date=%s' % optdate
 
         html = self._fetch(url)
+
         if html == 'None':
             irc.reply("Cannot fetch mlb scores.")
             return
@@ -284,9 +286,10 @@ class Scores(callbacks.Plugin):
 
             object_list.append(game)
 
-        allgames = string.join([item for item in object_list], " | ")
-
-        irc.reply(allgames)
+        if len(object_list) > 0:
+            irc.reply(string.join([item for item in object_list], " | "))
+        else:
+            irc.reply("No current MLB games.")
 
     mlb = wrap(mlb, [optional('somethingWithoutSpaces')])
     
