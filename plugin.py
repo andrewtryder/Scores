@@ -220,7 +220,48 @@ class Scores(callbacks.Plugin):
             irc.reply("No NFL games listed.")
 
     nfl = wrap(nfl)
+    
+    
+    def nba(self, irc, msg, args, optdate):
+        """<YYYYmmdd>
+        Display NBA scores. Optional: add in date to specify games/scores on date.
+        """
+        
+        if optdate:
+            testdate = self._validate(optdate, '%Y%m%d')
+            if not testdate:
+                irc.reply("Invalid year. Must be YYYYmmdd. Ex: 20120904")
+                return
+        else: # use today's date here, instead of with others. 
+            optdate = datetime.datetime.now().strftime("%Y%m%d")
 
+        url = 'nba/scoreboard?'
+        
+        if optdate:
+            url += 'date=%s' % optdate
+        
+        html = self._fetch(url)
+
+        if html == 'None':
+            irc.reply("Cannot fetch mlb scores.")
+            return
+        
+        soup = BeautifulSoup(html)
+        divs = soup.findAll('div', attrs={'id':re.compile('game.*?')})
+        
+        append_list = []
+        
+        for div in divs:
+            div = div.getText().replace(', NBATV','').replace(', TNT','').replace(', ESPN','').replace(', ABC','').replace(', ESP2','')
+            append_list.append(div)
+        
+        if len(append_list) > 0:
+            irc.reply(string.join([item for item in append_list], " | "))
+        else:
+            irc.reply("No current NBA games.")
+    
+    nba = wrap(nba, [optional('somethingWithoutSpaces')])
+    
     
     def mlb(self, irc, msg, args, optdate):
         """<YYYYmmdd>
@@ -333,8 +374,9 @@ class Scores(callbacks.Plugin):
                 if status:
                     status.extract() # extract so we may bold.
                 
-                div = div.getText().replace('v.',ircutils.mircColor('v. ','green')).replace('d.',ircutils.mircColor('d. ','red'))
-                append_list.append(str(ircutils.underline(status.getText()) + " " + div))
+                div = div.renderContents().strip().replace('<br />',' ').replace('  ',' ')
+                div = div.replace('v.',ircutils.mircColor('v.','green')).replace('d.',ircutils.mircColor('d.','red')) # colors.
+                append_list.append(str(ircutils.underline(status.getText()) + " " + div.strip()))
             
         if len(append_list) > 0: # Sanity check.
             if tournament and tournRound:
@@ -374,7 +416,12 @@ class Scores(callbacks.Plugin):
             pPlayer = tds[1].getText()
             pScore = tds[2].getText()
             pRound = tds[3].getText()
-            append_list.append(str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " (" + pRound + ")"))
+            if "am" in pRound or "pm" in pRound:
+                appendString = str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " (" + pRound + ")")
+            else:
+                pRound = pRound.split()[1] # 2nd element after space split.
+                appendString = str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " " + pRound) # don't need "(" here because it already has it.
+            append_list.append(appendString)
         
         if len(append_list) > 0:
             
