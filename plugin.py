@@ -67,7 +67,8 @@ class Scores(callbacks.Plugin):
 
     def cfb(self, irc, msg, args, optconf):
         """<conference>
-        Display CFB scores.
+        Display CFB scores. Optional: add in conference to display all scores from conference.
+        By default, it will display only active I-A games.
         """
         
         validconfs = { 'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big10':'5', 'big12':'4',
@@ -222,8 +223,8 @@ class Scores(callbacks.Plugin):
 
     
     def mlb(self, irc, msg, args, optdate):
-        """
-        Display MLB scores.
+        """<YYYYmmdd>
+        Display MLB scores. Optional: Add in date to display scores on date.
         """
     
         if optdate:
@@ -292,6 +293,47 @@ class Scores(callbacks.Plugin):
             irc.reply("No current MLB games.")
 
     mlb = wrap(mlb, [optional('somethingWithoutSpaces')])
+    
+    
+    def golf(self, irc, msg, args):
+        """
+        Display current Golf scores from a PGA tournament.
+        """
+        
+        url = 'golf/eventresult?'
+        
+        html = self._fetch(url)
+        
+        if html == 'None':
+            irc.reply("Cannot fetch Golf scores.")
+            return
+        
+        soup = BeautifulSoup(html)
+        golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
+        golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
+        table = soup.find('table', attrs={'class':'wide'})
+        rows = table.findAll('tr')[1:14] # skip header row. max 13.
+
+        append_list = []
+
+        for row in rows:
+            tds = row.findAll('td')
+            pRank = tds[0].getText()
+            pPlayer = tds[1].getText()
+            pScore = tds[2].getText()
+            pRound = tds[3].getText()
+            append_list.append(str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " (" + pRound + ")"))
+        
+        if len(append_list) > 0:
+            
+            if golfEvent != None and golfStatus != None:
+                irc.reply(ircutils.mircColor(golfEvent.getText(), 'green') + " - " + ircutils.bold(golfStatus.getText()))
+            
+            irc.reply(string.join([item for item in append_list], " | "))
+        else:
+            irc.reply("No current Golf scores.")
+        
+    golf = wrap(golf)
     
 Class = Scores
 
