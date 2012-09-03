@@ -295,6 +295,58 @@ class Scores(callbacks.Plugin):
     mlb = wrap(mlb, [optional('somethingWithoutSpaces')])
     
     
+    def tennis(self, irc, msg, args, optmatch):
+        """<mens|womens|mensdoubles|womensdoubles>
+        Display current Tennis scores. Defaults to Men's Singles.
+        """
+        
+        if optmatch:
+            if optmatch == "womens":
+                matchType = "2"
+            elif optmatch == "mensdoubles":
+                matchType = "3"
+            elif optmatch == "womensdoubles":
+                matchType = "4"
+            else:
+                matchType = "1"
+        else:
+            matchType = "1"
+        
+        url = 'general/tennis/dailyresults?matchType=%s' % matchType
+        
+        html = self._fetch(url)
+        
+        if html == 'None':
+            irc.reply("Cannot fetch Golf scores.")
+            return
+        
+        soup = BeautifulSoup(html)
+        tournament = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
+        tournRound = soup.findAll('div', attrs={'class': 'ind sub bold'})[1] # there are two here, only display the 2nd, which is status.
+        divs = soup.findAll('div', attrs={'class':re.compile('^ind$|^ind alt$')}) 
+
+        append_list = []
+
+        for div in divs:
+            if "a href" not in div.renderContents(): # only way to get around this as the divs are not in a container.
+                status = div.find('b') # find bold, which is status.
+                if status:
+                    status.extract() # extract so we may bold.
+                
+                div = div.getText().replace('v.',ircutils.mircColor('v. ','green')).replace('d.',ircutils.mircColor('d. ','red'))
+                append_list.append(str(ircutils.underline(status.getText()) + " " + div))
+            
+        if len(append_list) > 0: # Sanity check.
+            if tournament and tournRound:
+                irc.reply(ircutils.mircColor(tournament.getText(), 'red') + " - " + ircutils.bold(tournRound.getText()))
+                
+            irc.reply(" | ".join(item for item in append_list))
+        else:
+            irc.reply("I did not find any active tennis matches.") 
+
+    tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
+    
+    
     def golf(self, irc, msg, args):
         """
         Display current Golf scores from a PGA tournament.
