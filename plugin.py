@@ -96,7 +96,7 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch NFL scores.")
             return
 
-        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','').replace(', LHN','').replace(', FX','')
+        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','').replace(', LHN','').replace(', FX','').replace(', ACC','')
         html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','').replace(', SEC','').replace(', CSTV','')
 
         soup = BeautifulSoup(html)
@@ -147,7 +147,7 @@ class Scores(callbacks.Plugin):
         if len(append_list) > 0:       
             irc.reply(string.join([item for item in append_list], " | "))
         else:
-            irc.reply("No CFB games matched criteria.")
+            irc.reply("No CFB games matched criteria. Try specifying a conference to show non-active games.")
             
     cfb = wrap(cfb, [optional('somethingWithoutSpaces')])
     
