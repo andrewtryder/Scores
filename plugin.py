@@ -127,6 +127,7 @@ class Scores(callbacks.Plugin):
                     
                     time = time.replace('PPD', ircutils.mircColor('PPD', 'yellow')).replace('1st', ircutils.mircColor('1st', 'green')).replace('Half', ircutils.mircColor('HT', 'yellow'))
                     time = time.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
+                    time = time.replace('Dly', ircutils.mircColor('DLY', 'yellow'))
                     
                     if int(awayscore) > int(homescore):
                         awayteam = ircutils.bold(awayteam)
@@ -142,7 +143,8 @@ class Scores(callbacks.Plugin):
                     if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
                         append_list.append(game)
                 else:
-                    game = game.replace('Final', ircutils.mircColor('F', 'red'))
+                    game = game.replace('Final', ircutils.mircColor('F', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red')).replace('F/2OT', ircutils.mircColor('F/2OT', 'red'))
+                    game = game.replace('F/3OT', ircutils.mircColor('F/3OT', 'red'))
                     append_list.append(game)
         
         if len(append_list) > 0:       
