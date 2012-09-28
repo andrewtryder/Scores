@@ -408,11 +408,19 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html)
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
-        table = soup.find('table', attrs={'class':'wide'})
-        if not table:
-            irc.reply("Could not find Golf scores. Either no tournament or one going on like the Ryder Cup, which has an alt format.")
+
+        if str(golfEvent.getText()).startswith("Ryder Cup"): # special status for Ryder Cup.
+            rows = soup.find('div', attrs={'class':'ind'})
+            
+            irc.reply(ircutils.mircColor(golfEvent.getText(), 'green'))
+            irc.reply("{0}".format(rows.getText()))
             return
-        rows = table.findAll('tr')[1:14] # skip header row. max 13.
+        else:
+            table = soup.find('table', attrs={'class':'wide'})
+            if not table:
+                irc.reply("Could not find golf results. Tournament not going on?")
+                return    
+            rows = table.findAll('tr')[1:14] # skip header row. max 13.
 
         append_list = []
 
