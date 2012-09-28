@@ -410,7 +410,7 @@ class Scores(callbacks.Plugin):
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
         table = soup.find('table', attrs={'class':'wide'})
         if not table:
-            irc.reply("Could not find Golf scores. Either no tournament or one going on like the Ryder Cup which has an alt format.")
+            irc.reply("Could not find Golf scores. Either no tournament or one going on like the Ryder Cup, which has an alt format.")
             return
         rows = table.findAll('tr')[1:14] # skip header row. max 13.
 
