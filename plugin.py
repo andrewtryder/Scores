@@ -361,7 +361,7 @@ class Scores(callbacks.Plugin):
         html = self._fetch(url)
         
         if html == 'None':
-            irc.reply("Cannot fetch Golf scores.")
+            irc.reply("Cannot fetch Tennis scores.")
             return
         
         soup = BeautifulSoup(html)
@@ -409,6 +409,9 @@ class Scores(callbacks.Plugin):
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
         table = soup.find('table', attrs={'class':'wide'})
+        if not table:
+            irc.reply("Could not find Golf scores. Either no tournament or one going on like the Ryder Cup which has an alt format.")
+            return
         rows = table.findAll('tr')[1:14] # skip header row. max 13.
 
         append_list = []
