@@ -246,7 +246,7 @@ class Scores(callbacks.Plugin):
         html = self._fetch(url)
 
         if html == 'None':
-            irc.reply("Cannot fetch mlb scores.")
+            irc.reply("Cannot fetch NBA scores.")
             return
         
         soup = BeautifulSoup(html)
@@ -268,13 +268,13 @@ class Scores(callbacks.Plugin):
     
     def mlb(self, irc, msg, args, optdate):
         """<YYYYmmdd>
-        Display MLB scores. Optional: Add in date to display scores on date.
+        Display MLB scores. Optional: Add in date to display scores on date. Ex: 20120904.
         """
     
         if optdate:
             testdate = self._validate(optdate, '%Y%m%d')
             if not testdate:
-                irc.reply("Invalid year. Must be YYYYmmdd. Ex: 20120904")
+                irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
                 return
 
         url = 'mlb/scoreboard?'
@@ -302,7 +302,8 @@ class Scores(callbacks.Plugin):
         for row in rows:
             game = row.find('a').text.strip() 
             game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
-            game = game.replace(', ESPN', '').replace(', MLBN', '').replace(', TBS', '').replace(' PM','').replace(' AM','').replace(', ESP2', '')
+            game = game.replace(', ESPN','').replace(', MLBN','').replace(', TBS','').replace(' PM','').replace(' AM','').replace(', ESP2','').replace(', G1','').replace(', FOX','')
+            # colors!
             game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow')).replace('Del', ircutils.mircColor('DLY', 'yellow'))
             
             if " at " not in game: 
