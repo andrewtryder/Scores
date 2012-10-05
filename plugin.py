@@ -255,7 +255,7 @@ class Scores(callbacks.Plugin):
         append_list = []
         
         for div in divs:
-            div = div.getText().replace(', NBATV','').replace(', TNT','').replace(', ESPN','').replace(', ABC','').replace(', ESP2','')
+            div = div.getText().replace(', NBATV','').replace(', TNT','').replace(', ESPN','').replace(', ABC','').replace(', ESP2','').replace(', NBAt','')
             append_list.append(div)
         
         if len(append_list) > 0:
