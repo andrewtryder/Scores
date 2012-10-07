@@ -44,6 +44,23 @@ class Scores(callbacks.Plugin):
     def _dateFmt(self, string):
         """Return a short date string from a full date string."""
         return time.strftime('%m/%d', time.strptime(string, '%A, %B %d'))
+    
+    def _stringFmt(self, string):
+        """Return a string split at a comma and everything before since most junk is the comma and after. Also remove common junk"""
+        string2 = string.split(',', 1 )
+        returnString = string2[0].replace(' PM','').replace(' AM','')
+        return returnString
+    
+    def _colorizeString(self, string):
+        """Return a string containing colorized portions of common game elements."""
+        string = string.replace('Half', ircutils.mircColor('H', 'yellow')).replace('Final', ircutils.mircColor('F', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red'))
+        string = string.replace('F/OT2', ircutils.mircColor('F/OT2', 'red')).replace('1st', ircutils.mircColor('1st', 'green')).replace('2nd', ircutils.mircColor('2nd', 'green'))
+        string = string.replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green')).replace('PPD', ircutils.mircColor('PPD', 'yellow'))
+        string = string.replace('Dly', ircutils.mircColor('DLY', 'yellow')).replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
+        string = string.replace('Del', ircutils.mircColor('DLY', 'yellow'))
+        
+        return string
+
 
     def _fetch(self, optargs):
         """Internal function to fetch what we need."""
@@ -182,20 +199,15 @@ class Scores(callbacks.Plugin):
             rows = div.findAll('a')
             for row in rows:
                 game = row.text.strip()
-                game = game.replace(', NFL','').replace(', ESPN', '').replace(', FOX','').replace(', CBS','').replace(', NBC','').replace(', ABC','')
+                game = self._stringFmt(game)
+                
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}):
                     game = game.replace('*', ircutils.mircColor('<RZ>','red'))
                 else:
                     game = game.replace('*', ircutils.mircColor('<>','red'))
-                game = game.replace('Half', ircutils.mircColor('H', 'yellow'))
-                game = game.replace('Final', ircutils.mircColor('F', 'red'))
-                game = game.replace('F/OT', ircutils.mircColor('F/OT', 'red'))
-                game = game.replace('1st', ircutils.mircColor('1st', 'green'))
-                game = game.replace('2nd', ircutils.mircColor('2nd', 'green'))
-                game = game.replace('3rd', ircutils.mircColor('3rd', 'green'))
-                game = game.replace('4th', ircutils.mircColor('4th', 'green'))
                 
-            
+                game = self._colorizeString(game)
+                
                 if " at " not in game: 
                     gamesplit = game.split(' ') 
                     awayteam = gamesplit[0]
@@ -255,8 +267,29 @@ class Scores(callbacks.Plugin):
         append_list = []
         
         for div in divs:
-            div = div.getText().replace(', NBATV','').replace(', TNT','').replace(', ESPN','').replace(', ABC','').replace(', ESP2','').replace(', NBAt','')
-            append_list.append(div)
+            game = self._stringFmt(div.getText()) # strip all past ,
+            game = self._colorizeString(game) # colorize the status.
+            
+            if " at " not in game: 
+                gamesplit = game.split(' ') 
+                awayteam = gamesplit[0]
+                awayscore = gamesplit[1]
+                hometeam = gamesplit[2]
+                homescore = gamesplit[3]
+                time = gamesplit[4:]
+                time = " ".join(time)
+                    
+                # bold the leader
+                if int(awayscore) > int(homescore):
+                    awayteam = ircutils.bold(awayteam)
+                    awayscore = ircutils.bold(awayscore)
+                elif int(homescore) > int(awayscore):
+                    hometeam = ircutils.bold(hometeam)
+                    homescore = ircutils.bold(homescore)
+                
+                game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
+            
+            append_list.append(game)
         
         if len(append_list) > 0:
             irc.reply(string.join([item for item in append_list], " | "))
@@ -300,11 +333,14 @@ class Scores(callbacks.Plugin):
         object_list = []
 
         for row in rows:
-            game = row.find('a').text.strip() 
+            game = row.find('a').text.strip()
+            game = self._stringFmt(game)
             game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
-            game = game.replace(', ESPN','').replace(', MLBN','').replace(', TBS','').replace(' PM','').replace(' AM','').replace(', ESP2','').replace(', G1','').replace(', FOX','')
+            #game = game.replace(', ESPN','').replace(', MLBN','').replace(', TBS','').replace(' PM','').replace(' AM','').replace(', ESP2','').replace(', G1','').replace(', FOX','')
             # colors!
-            game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow')).replace('Del', ircutils.mircColor('DLY', 'yellow'))
+            
+            game = self._colorizeString(game)
+            #game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow')).replace('Del', ircutils.mircColor('DLY', 'yellow'))
             
             if " at " not in game: 
                 game = game.replace('Bot ','B').replace('Top ','T').replace('Mid ','M').replace('End ','E') # innings
