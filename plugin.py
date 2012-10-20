@@ -61,7 +61,6 @@ class Scores(callbacks.Plugin):
         
         return string
 
-
     def _fetch(self, optargs):
         """Internal function to fetch what we need."""
         
@@ -110,12 +109,8 @@ class Scores(callbacks.Plugin):
         html = self._fetch(url)
         
         if html == 'None':
-            irc.reply("Cannot fetch NFL scores.")
+            irc.reply("Cannot fetch CFB scores.")
             return
-
-        html = html.replace(', ESPN','').replace(', BIG10','').replace(', ABC','').replace(', FOX','').replace(', PAC12','').replace(', LHN','').replace(', CBSS','')
-        html = html.replace(', CBS','').replace(', FX','').replace(', CSTV','').replace(', ESP2','').replace(', ESPU','').replace(', SEC','').replace(', NBCS','')
-        html = html.replace(', CSTV','').replace(', NBC','').replace(', FX','').replace(', ACC','').replace(', BEN','')
 
         soup = BeautifulSoup(html)
         divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
@@ -126,12 +121,15 @@ class Scores(callbacks.Plugin):
             rows = div.findAll('a')
             for row in rows:
                 game = row.text.strip().replace(';','')
+                game = self._stringFmt(game)
                 
                 # rz/pos display
                 if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}): 
                     game = game.replace('*', ircutils.mircColor('<RZ>','red'))
                 else:
                     game = game.replace('*', ircutils.mircColor('<>','red'))
+                
+                game = self._colorizeString(game)
                 
                 if " at " not in game: 
                     gamesplit = game.split(' ') 
@@ -142,10 +140,6 @@ class Scores(callbacks.Plugin):
                     time = gamesplit[4:]
                     time = " ".join(time)
                     
-                    time = time.replace('PPD', ircutils.mircColor('PPD', 'yellow')).replace('1st', ircutils.mircColor('1st', 'green')).replace('Half', ircutils.mircColor('HT', 'yellow'))
-                    time = time.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
-                    time = time.replace('Dly', ircutils.mircColor('DLY', 'yellow'))
-                    
                     if int(awayscore) > int(homescore):
                         awayteam = ircutils.bold(awayteam)
                         awayscore = ircutils.bold(awayscore)
@@ -153,21 +147,18 @@ class Scores(callbacks.Plugin):
                         hometeam = ircutils.bold(hometeam)
                         homescore = ircutils.bold(homescore)
                     
-                
                     game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
                 
                 if not optconf: # by default, only show active I-A games.
                     if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
                         append_list.append(game)
                 else:
-                    game = game.replace('Final', ircutils.mircColor('F', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red')).replace('F/2OT', ircutils.mircColor('F/2OT', 'red'))
-                    game = game.replace('F/3OT', ircutils.mircColor('F/3OT', 'red'))
                     append_list.append(game)
         
         if len(append_list) > 0:       
             irc.reply(string.join([item for item in append_list], " | "))
         else:
-            irc.reply("No CFB games matched criteria. Try specifying a conference to show non-active games.")
+            irc.reply("No CFB games matched criteria. Try specifying a conference to show non-active games. Ex: SEC")
             
     cfb = wrap(cfb, [optional('somethingWithoutSpaces')])
     
@@ -334,13 +325,9 @@ class Scores(callbacks.Plugin):
 
         for row in rows:
             game = row.find('a').text.strip()
-            game = self._stringFmt(game)
-            game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # teams.
-            #game = game.replace(', ESPN','').replace(', MLBN','').replace(', TBS','').replace(' PM','').replace(' AM','').replace(', ESP2','').replace(', G1','').replace(', FOX','')
-            # colors!
-            
-            game = self._colorizeString(game)
-            #game = game.replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow')).replace('Del', ircutils.mircColor('DLY', 'yellow'))
+            game = self._stringFmt(game) # remove after comma.
+            game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # fix teams.            
+            game = self._colorizeString(game) # colorize status.
             
             if " at " not in game: 
                 game = game.replace('Bot ','B').replace('Top ','T').replace('Mid ','M').replace('End ','E') # innings
