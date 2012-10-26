@@ -57,12 +57,11 @@ class Scores(callbacks.Plugin):
         string = string.replace('F/OT2', ircutils.mircColor('F/OT2', 'red')).replace('1st', ircutils.mircColor('1st', 'green')).replace('2nd', ircutils.mircColor('2nd', 'green'))
         string = string.replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green')).replace('PPD', ircutils.mircColor('PPD', 'yellow'))
         string = string.replace('Dly', ircutils.mircColor('DLY', 'yellow')).replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
-        string = string.replace('Del', ircutils.mircColor('DLY', 'yellow'))
-        
+        string = string.replace('Del', ircutils.mircColor('DLY', 'yellow')).replace('F/OT3', ircutils.mircColor('F/OT3', 'red'))
         return string
 
     def _fetch(self, optargs):
-        """Internal function to fetch what we need."""
+        """Fetch scores."""
         
         url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         
@@ -129,8 +128,6 @@ class Scores(callbacks.Plugin):
                 else:
                     game = game.replace('*', ircutils.mircColor('<>','red'))
                 
-                game = self._colorizeString(game)
-                
                 if " at " not in game: 
                     gamesplit = game.split(' ') 
                     awayteam = gamesplit[0]
@@ -151,8 +148,10 @@ class Scores(callbacks.Plugin):
                 
                 if not optconf: # by default, only show active I-A games.
                     if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
+                        game = self._colorizeString(game)
                         append_list.append(game)
                 else:
+                    game = self._colorizeString(game)
                     append_list.append(game)
         
         if len(append_list) > 0:       
