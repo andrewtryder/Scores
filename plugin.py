@@ -78,6 +78,81 @@ class Scores(callbacks.Plugin):
     ###########################
     # start public functions. #
     ###########################
+
+    def ncb(self, irc, msg, args, optconf):
+        """<conference>
+        Display NCB scores. Optional: add in conference to display all scores from conference.
+        By default, it will display only active I-A games.
+        """
+
+        validconfs = {  'top25':'999', 'a10':'3', 'acc':'2', 'ameast':'1', 'big12':'8', 'bigeast':'4', 'bigsky':'5', 'bigsouth':'6', 'big10':'7',
+                        'bigwest':'9', 'c-usa':'11', 'caa':'10', 'greatwest':'57', 'horizon':'45', 'independent':'43', 'ivy':'12', 'maac':'13',
+                        'mac':'14', 'meac':'16', 'mvc':'18', 'mwc':'44', 'div-i':'50', 'nec':'19', 'non-div-i':'51', 'ovc':'20', 'pac12':'21',
+                        'patriot':'22', 'sec':'23', 'southern':'24', 'southland':'25', 'summit':'49', 'sunbelt':'27', 'swac':'26', 'wac':'30', 'wcc':'29'
+        }
+        
+        if optconf:
+            optconf = optconf.lower()        
+            if optconf not in validconfs:
+                irc.reply("Conference must be one of: %s" % validconfs.keys())
+                return
+            
+        url = 'ncb/scoreboard?'
+        
+        if not optconf:
+            url += 'groupId=%s' % validconfs['top25']
+        else:
+            url += 'groupId=%s' % validconfs[optconf]
+                        
+        html = self._fetch(url)
+        
+        if html == 'None':
+            irc.reply("Cannot fetch NCB scores.")
+            return
+
+        soup = BeautifulSoup(html)
+        divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
+
+        append_list = []
+
+        for div in divs:
+            rows = div.findAll('a')
+            for row in rows:
+                game = row.text.strip().replace(';','')
+                game = self._stringFmt(game)
+                
+                if " at " not in game: 
+                    gamesplit = game.split(' ') 
+                    awayteam = gamesplit[0]
+                    awayscore = gamesplit[1]
+                    hometeam = gamesplit[2]
+                    homescore = gamesplit[3]
+                    time = gamesplit[4:]
+                    time = " ".join(time)
+                    
+                    if int(awayscore) > int(homescore):
+                        awayteam = ircutils.bold(awayteam)
+                        awayscore = ircutils.bold(awayscore)
+                    elif int(homescore) > int(awayscore):
+                        hometeam = ircutils.bold(hometeam)
+                        homescore = ircutils.bold(homescore)
+                    
+                    game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
+                
+                if not optconf: # by default, only show active I-A games.
+                    if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
+                        game = self._colorizeString(game)
+                        append_list.append(game)
+                else:
+                    game = self._colorizeString(game)
+                    append_list.append(game)
+        
+        if len(append_list) > 0:       
+            irc.reply(string.join([item for item in append_list], " | "))
+        else:
+            irc.reply("No NCB games matched criteria. Try specifying a conference to show non-active games. Ex: SEC")
+            
+    ncb = wrap(ncb, [optional('somethingWithoutSpaces')])
     
 
     def cfb(self, irc, msg, args, optconf):
@@ -101,7 +176,7 @@ class Scores(callbacks.Plugin):
             
         url = 'ncf/scoreboard?'
         if not optconf:
-            url += 'groupId=%s' % validconfs['i-a']
+            url += 'groupId=%s' % validconfs['top25']
         else:
             url += 'groupId=%s' % validconfs[optconf]
                         
