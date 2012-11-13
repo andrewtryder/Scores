@@ -58,6 +58,8 @@ class Scores(callbacks.Plugin):
         string = string.replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green')).replace('PPD', ircutils.mircColor('PPD', 'yellow'))
         string = string.replace('Dly', ircutils.mircColor('DLY', 'yellow')).replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
         string = string.replace('Del', ircutils.mircColor('DLY', 'yellow')).replace('F/3OT', ircutils.mircColor('F/3OT', 'red')).replace('F/4OT', ircutils.mircColor('F/4OT', 'red'))
+        string = string.replace('1OT', ircutils.mircColor('1OT', 'green')).replace('2OT', ircutils.mircColor('2OT', 'green')).replace('3OT', ircutils.mircColor('3OT', 'green'))
+        string = string.replace('4OT', ircutils.mircColor('4OT', 'green'))
         return string
 
     def _fetch(self, optargs):
