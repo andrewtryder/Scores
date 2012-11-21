@@ -53,13 +53,12 @@ class Scores(callbacks.Plugin):
     
     def _colorizeString(self, string):
         """Return a string containing colorized portions of common game elements."""
-        string = string.replace('Half', ircutils.mircColor('H', 'yellow')).replace('Final', ircutils.mircColor('F', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red'))
-        string = string.replace('F/OT', ircutils.mircColor('F/2OT', 'red')).replace('1st', ircutils.mircColor('1st', 'green')).replace('2nd', ircutils.mircColor('2nd', 'green'))
-        string = string.replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green')).replace('PPD', ircutils.mircColor('PPD', 'yellow'))
+        string = string.replace('Half', ircutils.mircColor('H', 'yellow')).replace('Final', ircutils.mircColor('F', 'red')).replace('1st', ircutils.mircColor('1st', 'green'))
+        string = string.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
         string = string.replace('Dly', ircutils.mircColor('DLY', 'yellow')).replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
         string = string.replace('Del', ircutils.mircColor('DLY', 'yellow')).replace('F/3OT', ircutils.mircColor('F/3OT', 'red')).replace('F/4OT', ircutils.mircColor('F/4OT', 'red'))
         string = string.replace('1OT', ircutils.mircColor('1OT', 'green')).replace('2OT', ircutils.mircColor('2OT', 'green')).replace('3OT', ircutils.mircColor('3OT', 'green'))
-        string = string.replace('4OT', ircutils.mircColor('4OT', 'green'))
+        string = string.replace('4OT', ircutils.mircColor('4OT', 'green')).replace('F/2OT', ircutils.mircColor('F/2OT', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red'))
         return string
 
     def _fetch(self, optargs):
