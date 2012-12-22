@@ -21,9 +21,7 @@ def configure(advanced):
 
 
 Scores = conf.registerPlugin('Scores')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(Scores, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) in output."""))
 
 
-# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
+# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
