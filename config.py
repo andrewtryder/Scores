@@ -5,6 +5,7 @@
 #
 ###
 
+import os
 import supybot.conf as conf
 import supybot.registry as registry
 from supybot.i18n import PluginInternationalization, internationalizeDocstring
@@ -22,6 +23,6 @@ def configure(advanced):
 
 Scores = conf.registerPlugin('Scores')
 conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) in output."""))
-
+conf.registerGlobalValue(Scores, 'dbLocation', registry.String(os.path.abspath(os.path.dirname(__file__)) + '/db/scores.db', """Absolute path for scores.db sqlite3 database file location."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
