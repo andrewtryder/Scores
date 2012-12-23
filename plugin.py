@@ -88,7 +88,7 @@ class Scores(callbacks.Plugin):
     
     def _formatstatus(self, string):
         """handle the formating of status without color."""
-        table = {'Final':'F','Dly':'DLY','Del:':'DLY','Del':'DLY'}        
+        table = {'Final':'F','Dly':'DLY','Del:':'DLY','Del':'DLY','Half':'H', 'Canc':'CAN'}        
         try:
             return table[string]
         except:
@@ -97,11 +97,13 @@ class Scores(callbacks.Plugin):
     def _colorformatstatus(self, string):
         """Handle the formatting of a status with color."""
         table = {'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
+                 'Canc':self._red('CAN'),
+                 
                  '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
                  '4th':self._green('4th'),
                  
-                 'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),'PPD':self._yellow('PPD'),
-                 'Del:':self._yellow('DLT')
+                 'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
+                 'PPD':self._yellow('PPD'), 'Del:':self._yellow('DLT')
                  }
         try:
             return table[string]
