@@ -23,7 +23,7 @@ def configure(advanced):
 
 Scores = conf.registerPlugin('Scores')
 conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) in output."""))
-conf.registerChannelValue(Scores, 'fullteams', registry.Boolean(True, """Display full team names in output for channel? (Uses db)"""))
+conf.registerChannelValue(Scores, 'fullteams', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
 conf.registerGlobalValue(Scores, 'dbLocation', registry.String(os.path.abspath(os.path.dirname(__file__)) + '/db/scores.db', """Absolute path for scores.db sqlite3 database file location."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
