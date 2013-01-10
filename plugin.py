@@ -295,6 +295,36 @@ class Scores(callbacks.Plugin):
     
     nfl = wrap(nfl)
 
+
+    def nhl(self, irc, msg, args):
+        """
+        Display NHL scores.
+        """      
+                
+        # fetch html and handle if we get back None for error.
+        html = self._fetch('nhl/scoreboard?')
+        if html == 'None':
+            irc.reply("Cannot fetch NHL scores.")
+            return
+                
+        # process the data we get back, checking for color.
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = self._scores(html, colorize=False, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+        else:
+            gameslist = self._scores(html, colorize=True, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+        
+        # output
+        if len(gameslist) > 0: # if we have games
+            if len(gameslist) > 10: # more than ten, break it up.
+                for N in self._batch(gameslist, 10):
+                    irc.reply( string.join([item for item in N], " | ") )
+            else: # less than 10.
+                irc.reply(string.join([item for item in gameslist], " | "))
+        else: # no games
+            irc.reply("No NHL games listed.")
+    
+    nhl = wrap(nhl)
+
     
     def ncb(self, irc, msg, args, optconf):
         """<conference>
