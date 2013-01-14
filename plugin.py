@@ -8,7 +8,7 @@
 
 # my libs
 import urllib2
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, NavigableString
 import re
 import string
 import datetime
@@ -558,54 +558,70 @@ class Scores(callbacks.Plugin):
     
     
     def tennis(self, irc, msg, args, optmatch):
-        """<mens|womens|mensdoubles|womensdoubles>
+        """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
         Display current Tennis scores. Defaults to Men's Singles.
+        Call with argument to display others. Ex: womens
         """
         
         if optmatch:
+            optmatch = optmatch.lower()
             if optmatch == "womens":
                 matchType = "2"
             elif optmatch == "mensdoubles":
                 matchType = "3"
             elif optmatch == "womensdoubles":
                 matchType = "4"
+            elif optmatch == "mixeddoubles":
+                matchType = "6"
             else:
                 matchType = "1"
         else:
             matchType = "1"
         
-        url = 'general/tennis/dailyresults?matchType=%s' % matchType
-        
-        html = self._fetch(url)
-        
+        html = self._fetch('general/tennis/dailyresults?matchType=%s' % matchType)
         if html == 'None':
             irc.reply("Cannot fetch Tennis scores.")
             return
         
-        soup = BeautifulSoup(html)
-        tournament = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
-        tournRound = soup.findAll('div', attrs={'class': 'ind sub bold'})[1] # there are two here, only display the 2nd, which is status.
-        divs = soup.findAll('div', attrs={'class':re.compile('^ind$|^ind alt$')}) 
+        # one easy sanity check.
+        if "There are no matches scheduled." in html:
+            irc.reply("ERROR: There are no matches scheduled for: %s" % optmatch)
+            return
+        
+        # process html.
+        soup = BeautifulSoup(html,convertEntities=BeautifulSoup.HTML_ENTITIES)
+        matches = soup.findAll('div', attrs={'class':re.compile('^ind|^ind alt')})
+        if len(matches) < 1: # second sanity check.
+            irc.reply("ERROR: No %s tennis matches found" % optmatch)
+            return
+        title = soup.find('div', attrs={'class':'sec row'})
+        tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]
 
-        append_list = []
+        # now iterate through each match and populate output.
+        output = []
+        for each in matches:
+            if each.find('b'): # <b> means it is a tennis match.
+                status = each.find('b').extract()
+                if status.text == "Final":
+                    status = self._red("F")
+                else:
+                    status = self._bold(status.text)
+                matchText = []
+                for item in each.contents:
+                    if isinstance(item, NavigableString):
+                        matchText.append(item.strip())
+                output.append("{0} :: {1}".format(status," ".join(matchText)))
 
-        for div in divs:
-            if "a href" not in div.renderContents(): # only way to get around this as the divs are not in a container.
-                status = div.find('b') # find bold, which is status.
-                if status:
-                    status.extract() # extract so we may bold.
-                
-                div = div.renderContents().strip().replace('<br />',' ').replace('  ',' ')
-                div = div.replace('v.',ircutils.mircColor('v.','green')).replace('d.',ircutils.mircColor('d.','red')) # colors.
-                append_list.append(str(ircutils.underline(status.getText()) + " " + div.strip()))
-            
-        if len(append_list) > 0: # Sanity check.
-            if tournament and tournRound:
-                irc.reply(ircutils.mircColor(tournament.getText(), 'red') + " - " + ircutils.bold(tournRound.getText()))
-                
-            irc.reply(" | ".join(item for item in append_list))
+        # now output.
+        if len(output) < 1:
+            irc.reply("Error: no matches to output.")
+        elif len(output) < 6:
+            irc.reply("{0} {1}".format(self._bold(title.getText()),self._bold(tennisRound.getText())))
+            for each in output:
+                irc.reply("{0}".format(each))
         else:
-            irc.reply("I did not find any active tennis matches.") 
+            irc.reply("{0} {1}".format(self._bold(title.getText()),self._bold(tennisRound.getText())))
+            irc.reply("{0}".format(" | ".join(output)))
 
     tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
     
@@ -614,11 +630,8 @@ class Scores(callbacks.Plugin):
         """
         Display current Golf scores from a PGA tournament.
         """
-        
-        url = 'golf/eventresult?'
-        
-        html = self._fetch(url)
-        
+
+        html = self._fetch('golf/eventresult?')
         if html == 'None':
             irc.reply("Cannot fetch Golf scores.")
             return
@@ -656,10 +669,8 @@ class Scores(callbacks.Plugin):
             append_list.append(appendString)
         
         if len(append_list) > 0:
-            
             if golfEvent != None and golfStatus != None:
                 irc.reply(ircutils.mircColor(golfEvent.getText(), 'green') + " - " + ircutils.bold(golfStatus.getText()))
-            
             irc.reply(string.join([item for item in append_list], " | "))
         else:
             irc.reply("No current Golf scores.")
