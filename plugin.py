@@ -63,7 +63,7 @@ class Scores(callbacks.Plugin):
         return strings[0]
     
     def _boldleader(self, atm, asc, htm, hsc):
-        """Input away team, away score, home team, home score and bold the leader. Adds bold if colorize=True."""
+        """Input away team, away score, home team, home score and bold the leader."""
         if int(asc) > int(hsc):
             return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
         elif int(hsc) > int(asc):
@@ -143,11 +143,10 @@ class Scores(callbacks.Plugin):
             gametext = self._stripcomma(game.getText()) # remove cruft after comma.
             if " at " not in gametext: # game is in-action.
                 if sport == 'nfl' or sport == 'ncb': # special for NFL/NCB to display POS.
-                    if colorize:
-                        if game.find('b', attrs={'class':'red'}):
-                            gametext = gametext.replace('*',self._red('<RZ>'))
-                        else:
-                            gametext = gametext.replace('*', self._red('<>'))
+                    if game.find('b', attrs={'class':'red'}):
+                        gametext = gametext.replace('*',self._red('<RZ>'))
+                    else:
+                        gametext = gametext.replace('*', self._red('<>'))
                         
                 gparts = gametext.split(" ", 4) # make sure we split into parts and shove whatever status/time is in the rest.
                 
