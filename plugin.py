@@ -36,27 +36,10 @@ class Scores(callbacks.Plugin):
     def _dateFmt(self, string):
         """Return a short date string from a full date string."""
         return time.strftime('%m/%d', time.strptime(string, '%A, %B %d'))
-    
-    def _stringFmt(self, string):
-        """Return a string split at a comma and everything before since most junk is the comma and after. Also remove common junk"""
-        string2 = string.split(',', 1 )
-        returnString = string2[0].replace(' PM','').replace(' AM','')
-        return returnString
-        
-    def _colorizeString(self, string):
-        """Return a string containing colorized portions of common game elements."""
-        string = string.replace('Half', ircutils.mircColor('H', 'yellow')).replace('Final', ircutils.mircColor('F', 'red')).replace('1st', ircutils.mircColor('1st', 'green'))
-        string = string.replace('2nd', ircutils.mircColor('2nd', 'green')).replace('3rd', ircutils.mircColor('3rd', 'green')).replace('4th', ircutils.mircColor('4th', 'green'))
-        string = string.replace('Dly', ircutils.mircColor('DLY', 'yellow')).replace('Del:', ircutils.mircColor('DLY', 'yellow')).replace('PPD',ircutils.mircColor('PPD', 'yellow'))
-        string = string.replace('Del', ircutils.mircColor('DLY', 'yellow')).replace('F/3OT', ircutils.mircColor('F/3OT', 'red')).replace('F/4OT', ircutils.mircColor('F/4OT', 'red'))
-        string = string.replace('1OT', ircutils.mircColor('1OT', 'green')).replace('2OT', ircutils.mircColor('2OT', 'green')).replace('3OT', ircutils.mircColor('3OT', 'green'))
-        string = string.replace('4OT', ircutils.mircColor('4OT', 'green')).replace('F/2OT', ircutils.mircColor('F/2OT', 'red')).replace('F/OT', ircutils.mircColor('F/OT', 'red'))
-        return string
-        
+            
     # new stuff
     def _batch(self, iterable, size):
         """http://code.activestate.com/recipes/303279/#c7"""
-
         c = count()
         for k, g in groupby(iterable, lambda x:c.next()//size):
             yield g
@@ -79,58 +62,39 @@ class Scores(callbacks.Plugin):
         strings = string.split(',', 1 )
         return strings[0]
     
-    def _boldleader(self, atm, asc, htm, hsc, colorize=True):
+    def _boldleader(self, atm, asc, htm, hsc):
         """Input away team, away score, home team, home score and bold the leader. Adds bold if colorize=True."""
         if int(asc) > int(hsc):
-            if colorize:
-                return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
-            else:
-                return("*{0} {1} {2} {3}".format(atm, asc, htm, hsc))
+            return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
         elif int(hsc) > int(asc):
-            if colorize:
-                return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
-            else:
-                return("{0} {1} *{2} {3}".format(atm, asc, htm, hsc))
+            return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
         else:
             return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
-    
-    def _formatstatus(self, string):
-        """handle the formating of status without color."""
-        table = {'Final':'F','Dly':'DLY','Del:':'DLY','Del':'DLY','Half':'H', 'Canc':'CAN'}        
-        try:
-            return table[string]
-        except:
-            return string
-    
+        
     def _colorformatstatus(self, string):
         """Handle the formatting of a status with color."""
-        table = {'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
+        table = {# Red
+                 'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
                  'Canc':self._red('CAN'),
-                 
+                 # Green
                  '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
                  '4th':self._green('4th'),
-                 
+                 # Yellow
                  'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
-                 'PPD':self._yellow('PPD'), 'Del:':self._yellow('DLT')
+                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLT'),'Int':self._yellow('INT')
                  }
         try:
             return table[string]
         except:
             return string
     
-    def _handlestatus(self, string, colorize=True):
-        """Handle working with the time/innings/status of a game. Issue colorize=False to not colorize."""
+    def _handlestatus(self, string):
+        """Handle working with the time/innings/status of a game."""
         strings = string.split(' ', 1 ) # split at space, everything in a list w/two.       
         if len(strings) == 2: # if we have two items, like 3:00 4th
-            if colorize:
-                return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1])) # ignore time and colorize quarter/etc.
-            else:
-                return "{0} {1}".format(strings[0], self._formatstatus(strings[1])) # ignore time and format quarter/etc.
+            return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1])) # ignore time and colorize quarter/etc.
         else: # game is "not in progress"
-            if colorize:
-                return self._colorformatstatus(strings[0]) # just return the colorized quarter/etc due to no time.
-            else:
-                return self._formatstatus(strings[0]) # just return the quarter/etc due to no time.
+            return self._colorformatstatus(strings[0]) # just return the colorized quarter/etc due to no time.
                 
     def _red(self, string):
         """Returns a red string."""
@@ -167,7 +131,7 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR fetching: {0} message: {1}".format(url, e))
             return None
 
-    def _scores(self, html, colorize=True, sport="", fullteams=True):
+    def _scores(self, html, sport="", fullteams=True):
         """Go through each "game" we receive and process the data."""
         soup = BeautifulSoup(html)
         subdark = soup.find('div', attrs={'class':'sub dark'})
@@ -176,48 +140,39 @@ class Scores(callbacks.Plugin):
         gameslist = []
 
         for game in games: # go through each game
-            gametext = self._stripcomma(game.getText())
+            gametext = self._stripcomma(game.getText()) # remove cruft after comma.
             if " at " not in gametext: # game is in-action.
-                if sport == 'nfl' or sport == 'ncb':
+                if sport == 'nfl' or sport == 'ncb': # special for NFL/NCB to display POS.
                     if colorize:
                         if game.find('b', attrs={'class':'red'}):
                             gametext = gametext.replace('*',self._red('<RZ>'))
                         else:
                             gametext = gametext.replace('*', self._red('<>'))
                         
-                gparts = gametext.split(" ", 4) # make sure we split into parts and shove whatever status/time is in the rest. colorize if true.
+                gparts = gametext.split(" ", 4) # make sure we split into parts and shove whatever status/time is in the rest.
                 
-                if fullteams:
+                if fullteams: # gparts[0] = away/2=home. full translation table. 
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
-           
-                if not colorize: # work with colorization.                   
-                    gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3], colorize=False)
-                    output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4], colorize=False))                
-                else: # dont colorize.
-                    gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3], colorize=True)
-                    output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4], colorize=True))
-            
+                # now bold the leader and format output.         
+                gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
+                output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4]))            
             else: # TEAM at TEAM time for inactive games.
-                if fullteams:
-                    gparts = gametext.replace(' PM','').replace(' AM','').split(" ", 3)
+                gparts = gametext.replace(' PM','').replace(' AM','').split(" ", 3) # remove AM/PM in cruft.
+                if fullteams: # full teams. not working yet.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
-                    output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
-                else:
-                    output = gametext.replace(' PM','').replace(' AM','') # remove AM or PM.
+                output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3]) # prepare to append.
             # finally add whatever output is.
             gameslist.append(output) 
-        # finally, return.
-        return gameslist
+        return gameslist # return the list of games.
 
+    # translation function that needs a team and sport.
     def _transteam(self, optteam, optsport=""):
         db_filename = self.registryValue('dbLocation')
-        
         if not os.path.exists(db_filename):
             self.log.error("ERROR: I could not find: %s" % db_filename)
-            return
-        
+            return optteam
         conn = sqlite3.connect(db_filename)
         cursor = conn.cursor()
         cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
@@ -235,33 +190,87 @@ class Scores(callbacks.Plugin):
     def nba(self, irc, msg, args, optlist):
         """[--date YYYYMMDD]
         Display NBA scores.
+        Use --date YYMMDD to display scores on specific date. Ex: --date 20121225
         """      
         
         # handle optlist.
+        url = 'nba/scoreboard?'
         if optlist:
             for (key, value) in optlist:
                 if key == 'date':
-                    pass
+                    if not self._validate(value, '%Y%m%d'):
+                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                        return
+                    else:
+                        url += 'date=%s' % value
         
         # fetch html and handle if we get back None for error.
-        html = self._fetch('nba/scoreboard?')
+        html = self._fetch(url)
         if html == 'None':
             irc.reply("Cannot fetch NBA scores.")
             return
         
-        # process the data we get back, checking for color.
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]))
+        
+        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
-            gameslist = self._scores(html, colorize=False, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]))
-        else:
-            gameslist = self._scores(html, colorize=True, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]))
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
         
         # finally, check if there is any games/output.
-        if len(gameslist) > 0:
-            irc.reply(string.join([item for item in gameslist], " | "))
-        else:
+        if len(gameslist) > 0: # if we have games
+            if len(gameslist) > 10: # more than ten, break it up.
+                for N in self._batch(gameslist, 10):
+                    irc.reply(string.join([item for item in N], " | ") )
+            else: # less than 10.
+                irc.reply(string.join([item for item in gameslist], " | "))
+        else: # no games
             irc.reply("No NBA games listed.")
     
     nba = wrap(nba, [getopts({'date':''})])
+
+
+    def nhl(self, irc, msg, args, optlist):
+        """[--date YYYYMMDD]
+        Display NHL scores.
+        Use --date YYMMDD to display scores on specific date. Ex: --date 20121225
+        """      
+        
+        # handle optlist.
+        url = 'nhl/scoreboard?'
+        if optlist:
+            for (key, value) in optlist:
+                if key == 'date':
+                    if not self._validate(value, '%Y%m%d'):
+                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                        return
+                    else:
+                        url += 'date=%s' % value
+        
+        # fetch html and handle if we get back None for error.
+        html = self._fetch(url)
+        if html == 'None':
+            irc.reply("Cannot fetch NHL scores.")
+            return
+        
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+        
+        # strip ANSI if needed.
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+        
+        # finally, check if there is any games/output.
+        if len(gameslist) > 0: # if we have games
+            if len(gameslist) > 10: # more than ten, break it up.
+                for N in self._batch(gameslist, 10):
+                    irc.reply(string.join([item for item in N], " | ") )
+            else: # less than 10.
+                irc.reply(string.join([item for item in gameslist], " | "))
+        else: # no games
+            irc.reply("No NHL games listed.")
+    
+    nhl = wrap(nhl, [getopts({'date':''})])
 
 
     def nfl(self, irc, msg, args):
@@ -274,14 +283,13 @@ class Scores(callbacks.Plugin):
         if html == 'None':
             irc.reply("Cannot fetch NFL scores.")
             return
+                
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]))
         
-        # if more than 11, should we do some active/inactive stuff?
-        
-        # process the data we get back, checking for color.
+        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
-            gameslist = self._scores(html, colorize=False, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]))
-        else:
-            gameslist = self._scores(html, colorize=True, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]))
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
         
         # output
         if len(gameslist) > 0: # if we have games
@@ -296,22 +304,42 @@ class Scores(callbacks.Plugin):
     nfl = wrap(nfl)
 
 
-    def nhl(self, irc, msg, args):
+    def ncb(self, irc, msg, args, optconf):
+        """[conference]
+        Display NCB scores. Optional: add in conference to display all scores from conference.
+        By default, it will display only active I-A games.
         """
-        Display NHL scores.
-        """      
-                
-        # fetch html and handle if we get back None for error.
-        html = self._fetch('nhl/scoreboard?')
-        if html == 'None':
-            irc.reply("Cannot fetch NHL scores.")
-            return
-                
-        # process the data we get back, checking for color.
-        if self.registryValue('disableANSI', msg.args[0]):
-            gameslist = self._scores(html, colorize=False, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+
+        # basketball confs.
+        validconfs = {  'top25':'999', 'a10':'3', 'acc':'2', 'ameast':'1', 'big12':'8', 'bigeast':'4', 'bigsky':'5', 'bigsouth':'6', 'big10':'7',
+                        'bigwest':'9', 'c-usa':'11', 'caa':'10', 'greatwest':'57', 'horizon':'45', 'independent':'43', 'ivy':'12', 'maac':'13',
+                        'mac':'14', 'meac':'16', 'mvc':'18', 'mwc':'44', 'div-i':'50', 'nec':'19', 'non-div-i':'51', 'ovc':'20', 'pac12':'21',
+                        'patriot':'22', 'sec':'23', 'southern':'24', 'southland':'25', 'summit':'49', 'sunbelt':'27', 'swac':'26', 'wac':'30', 'wcc':'29' }
+        
+        # if we have a specific conf to display, get the id.
+        if optconf:
+            optconf = optconf.lower()        
+            if optconf not in validconfs:
+                irc.reply("Conference must be one of: %s" % validconfs.keys())
+                return
+        
+        # get top25 if no conf is specified.
+        if not optconf:
+            url = 'ncb/scoreboard?groupId=%s' % validconfs['top25']
         else:
-            gameslist = self._scores(html, colorize=True, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+            url = 'ncb/scoreboard?groupId=%s' % validconfs[optconf]
+                    
+        html = self._fetch(url)
+        if html == 'None':
+            irc.reply("Cannot fetch NCB scores.")
+            return
+
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='ncb', fullteams=self.registryValue('fullteams', msg.args[0]))
+        
+        # strip ANSI if needed.
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
         
         # output
         if len(gameslist) > 0: # if we have games
@@ -321,240 +349,102 @@ class Scores(callbacks.Plugin):
             else: # less than 10.
                 irc.reply(string.join([item for item in gameslist], " | "))
         else: # no games
-            irc.reply("No NHL games listed.")
-    
-    nhl = wrap(nhl)
-
-    
-    def ncb(self, irc, msg, args, optconf):
-        """<conference>
-        Display NCB scores. Optional: add in conference to display all scores from conference.
-        By default, it will display only active I-A games.
-        """
-
-        validconfs = {  'top25':'999', 'a10':'3', 'acc':'2', 'ameast':'1', 'big12':'8', 'bigeast':'4', 'bigsky':'5', 'bigsouth':'6', 'big10':'7',
-                        'bigwest':'9', 'c-usa':'11', 'caa':'10', 'greatwest':'57', 'horizon':'45', 'independent':'43', 'ivy':'12', 'maac':'13',
-                        'mac':'14', 'meac':'16', 'mvc':'18', 'mwc':'44', 'div-i':'50', 'nec':'19', 'non-div-i':'51', 'ovc':'20', 'pac12':'21',
-                        'patriot':'22', 'sec':'23', 'southern':'24', 'southland':'25', 'summit':'49', 'sunbelt':'27', 'swac':'26', 'wac':'30', 'wcc':'29'
-        }
-        
-        if optconf:
-            optconf = optconf.lower()        
-            if optconf not in validconfs:
-                irc.reply("Conference must be one of: %s" % validconfs.keys())
-                return
-            
-        url = 'ncb/scoreboard?'
-        
-        if not optconf:
-            url += 'groupId=%s' % validconfs['top25']
-        else:
-            url += 'groupId=%s' % validconfs[optconf]
-                        
-        html = self._fetch(url)
-        
-        if html == 'None':
-            irc.reply("Cannot fetch NCB scores.")
-            return
-
-        soup = BeautifulSoup(html)
-        divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
-
-        append_list = []
-
-        for div in divs:
-            rows = div.findAll('a')
-            for row in rows:
-                game = row.text.strip().replace(';','')
-                game = self._stringFmt(game)
-                
-                if " at " not in game: 
-                    gamesplit = game.split(' ') 
-                    awayteam = gamesplit[0]
-                    awayscore = gamesplit[1]
-                    hometeam = gamesplit[2]
-                    homescore = gamesplit[3]
-                    time = gamesplit[4:]
-                    time = " ".join(time)
-                    
-                    if int(awayscore) > int(homescore):
-                        awayteam = ircutils.bold(awayteam)
-                        awayscore = ircutils.bold(awayscore)
-                    elif int(homescore) > int(awayscore):
-                        hometeam = ircutils.bold(hometeam)
-                        homescore = ircutils.bold(homescore)
-                    
-                    game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
-                
-                if not optconf: # by default, only show active I-A games.
-                    if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
-                        game = self._colorizeString(game)
-                        append_list.append(game)
-                else:
-                    game = self._colorizeString(game)
-                    append_list.append(game)
-        
-        if len(append_list) > 0:       
-            irc.reply(string.join([item for item in append_list], " | "))
-        else:
-            irc.reply("No NCB games matched criteria. Try specifying a conference to show non-active games. Ex: SEC")
+            irc.reply("No college basketball games listed.")
             
     ncb = wrap(ncb, [optional('somethingWithoutSpaces')])
     
 
     def cfb(self, irc, msg, args, optconf):
-        """<conference>
+        """[conference]
         Display CFB scores. Optional: add in conference to display all scores from conference.
         By default, it will display only active I-A games.
         """
         
-        validconfs = { 'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big10':'5', 'big12':'4',
-                'bigsky':'20', 'caa':'48', 'c-usa':'12', 'independent':'18',
-                'ivy':'22', 'mac':'15', 'meac':'24', 'mvc':'21', 'i-a':'80',
-                'i-aa':'81', 'pac12':'9', 'southern':'29', 'sec':'8',
-                'sunbelt':'37', 'wac':'16'
-        }
+        # football confs.
+        validconfs = {  'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big10':'5', 'big12':'4',
+                        'bigsky':'20', 'caa':'48', 'c-usa':'12', 'independent':'18','ivy':'22', 'mac':'15',
+                        'meac':'24', 'mvc':'21', 'i-a':'80','i-aa':'81', 'pac12':'9', 'southern':'29', 'sec':'8',
+                        'sunbelt':'37', 'wac':'16' }
         
+        # if we have a specific conf, check the id.
         if optconf:
             optconf = optconf.lower()        
             if optconf not in validconfs:
                 irc.reply("Conference must be one of: %s" % validconfs.keys())
                 return
-            
-        url = 'ncf/scoreboard?'
+        
+        # display top25 if not.
         if not optconf:
-            url += 'groupId=%s' % validconfs['top25']
+            url = 'ncb/scoreboard?groupId=%s' % validconfs['top25']
         else:
-            url += 'groupId=%s' % validconfs[optconf]
+            url = 'ncb/scoreboard?groupId=%s' % validconfs[optconf]
                         
         html = self._fetch(url)
-        
         if html == 'None':
             irc.reply("Cannot fetch CFB scores.")
             return
 
-        soup = BeautifulSoup(html)
-        divs = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
-
-        append_list = []
-
-        for div in divs:
-            rows = div.findAll('a')
-            for row in rows:
-                game = row.text.strip().replace(';','')
-                game = self._stringFmt(game)
-                
-                # rz/pos display
-                if row.findParent('div').findParent('div').find('b', attrs={'class':'red'}): 
-                    game = game.replace('*', ircutils.mircColor('<RZ>','red'))
-                else:
-                    game = game.replace('*', ircutils.mircColor('<>','red'))
-                
-                if " at " not in game: 
-                    gamesplit = game.split(' ') 
-                    awayteam = gamesplit[0]
-                    awayscore = gamesplit[1]
-                    hometeam = gamesplit[2]
-                    homescore = gamesplit[3]
-                    time = gamesplit[4:]
-                    time = " ".join(time)
-                    
-                    if int(awayscore) > int(homescore):
-                        awayteam = ircutils.bold(awayteam)
-                        awayscore = ircutils.bold(awayscore)
-                    elif int(homescore) > int(awayscore):
-                        hometeam = ircutils.bold(hometeam)
-                        homescore = ircutils.bold(homescore)
-                    
-                    game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " " + time) 
-                
-                if not optconf: # by default, only show active I-A games.
-                    if " at " not in game and "Final" not in game and "F/" not in game and "PPD" not in game:
-                        game = self._colorizeString(game)
-                        append_list.append(game)
-                else:
-                    game = self._colorizeString(game)
-                    append_list.append(game)
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='ncf', fullteams=self.registryValue('fullteams', msg.args[0]))
         
-        if len(append_list) > 0:       
-            irc.reply(string.join([item for item in append_list], " | "))
-        else:
-            irc.reply("No CFB games matched criteria. Try specifying a conference to show non-active games. Ex: SEC")
+        # strip ANSI if needed.
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+            
+        # output
+        if len(gameslist) > 0: # if we have games
+            if len(gameslist) > 10: # more than ten, break it up.
+                for N in self._batch(gameslist, 10):
+                    irc.reply( string.join([item for item in N], " | ") )
+            else: # less than 10.
+                irc.reply(string.join([item for item in gameslist], " | "))
+        else: # no games
+            irc.reply("No college football games listed.")
             
     cfb = wrap(cfb, [optional('somethingWithoutSpaces')])
     
         
-    def mlb(self, irc, msg, args, optdate):
-        """<YYYYmmdd>
-        Display MLB scores. Optional: Add in date to display scores on date. Ex: 20120904.
-        """
-    
-        if optdate:
-            testdate = self._validate(optdate, '%Y%m%d')
-            if not testdate:
-                irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
-                return
-
-        url = 'mlb/scoreboard?'
-
-        if optdate:
-            url += 'date=%s' % optdate
-
-        html = self._fetch(url)
-
-        if html == 'None':
-            irc.reply("Cannot fetch mlb scores.")
-            return
-            
-        html = html.replace('class="ind alt', 'class="ind')
+    def mlb(self, irc, msg, args, optlist):
+        """[--date YYYYMMDD]
+        Display MLB scores.
+        Use --date YYMMDD to display scores on specific date. Ex: --date 20121225
+        """      
         
-        if "No games" in html:
-            irc.reply("No games on today.")
+        # handle optlist.
+        url = 'mlb/scoreboard?'
+        if optlist:
+            for (key, value) in optlist:
+                if key == 'date':
+                    if not self._validate(value, '%Y%m%d'):
+                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                        return
+                    else:
+                        url += 'date=%s' % value
+        
+        # fetch html and handle if we get back None for error.
+        html = self._fetch(url)
+        if html == 'None':
+            irc.reply("Cannot fetch MLB scores.")
             return
-
-        soup = BeautifulSoup(html)
-        rows = soup.findAll('div', attrs={'class':'ind', 'style':'white-space: nowrap;'})
-
-        object_list = []
-
-        for row in rows:
-            game = row.find('a').text.strip()
-            game = self._stringFmt(game) # remove after comma.
-            game = game.replace('SDG', 'SD').replace('SFO', 'SF').replace('TAM', 'TB').replace('WAS', 'WSH').replace('KAN', 'KC').replace('CHW', 'CWS') # fix teams.            
-            game = self._colorizeString(game) # colorize status.
-            
-            if " at " not in game: 
-                game = game.replace('Bot ','B').replace('Top ','T').replace('Mid ','M').replace('End ','E') # innings
-                game = game.replace('st','').replace('th','').replace('rd','').replace('nd','') # abbr
-                gamesplit = game.split(' ') 
-                awayteam = gamesplit[0]
-                awayscore = gamesplit[1]
-                hometeam = gamesplit[2]
-                homescore = gamesplit[3]
-                innings = gamesplit[4]
-
-                if int(awayscore) > int(homescore):
-                    awayteam = ircutils.bold(awayteam)
-                    awayscore = ircutils.bold(awayscore)
-                elif int(homescore) > int(awayscore):
-                    hometeam = ircutils.bold(hometeam)
-                    homescore = ircutils.bold(homescore)
-                
-                game = str(awayteam + " " + awayscore + " " + hometeam + " " + homescore + " ") 
-                if innings.startswith('F'):
-                    innings = innings.replace('Final','F')
-                    game += ircutils.mircColor(innings, 'red')
-                else:
-                    game += ircutils.mircColor(innings, 'green')
-
-            object_list.append(game)
-
-        if len(object_list) > 0:
-            irc.reply(string.join([item for item in object_list], " | "))
-        else:
-            irc.reply("No current MLB games.")
-
-    mlb = wrap(mlb, [optional('somethingWithoutSpaces')])
+        
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]))
+        
+        # strip ANSI if needed.
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+        
+        # finally, check if there is any games/output.
+        if len(gameslist) > 0: # if we have games
+            if len(gameslist) > 10: # more than ten, break it up.
+                for N in self._batch(gameslist, 10):
+                    irc.reply(string.join([item for item in N], " | ") )
+            else: # less than 10.
+                irc.reply(string.join([item for item in gameslist], " | "))
+        else: # no games
+            irc.reply("No MLB games listed.")
+    
+    mlb = wrap(mlb, [getopts({'date':''})])
     
     
     def tennis(self, irc, msg, args, optmatch):
