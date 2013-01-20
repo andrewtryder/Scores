@@ -172,7 +172,7 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR: I could not find: %s" % db_filename)
             return optteam
         # do some regex here to parse out the team.
-        partsregex = re.compile(r'(?P<pre>\<RZ\>|\*)?(?P<team>\w+){1}(?P<rank>\(\d+\))?')
+        partsregex = re.compile(r'(?P<pre>\<RZ\>|\*)?(?P<team>[A-Z\-&;]+)(?P<rank>\(\d+\))?')
         m = partsregex.search(optteam)
         # replace optteam with the team if we have it
         if m.group('team'): 
