@@ -357,8 +357,8 @@ class Scores(callbacks.Plugin):
         
         # output
         if len(gameslist) > 0: # if we have games
-            if len(gameslist) > 10: # more than ten, break it up.
-                for N in self._batch(gameslist, 10):
+            if len(gameslist) > 7: # more than ten, break it up.
+                for N in self._batch(gameslist, 7):
                     irc.reply( string.join([item for item in N], " | ") )
             else: # less than 10.
                 irc.reply(string.join([item for item in gameslist], " | "))
@@ -407,8 +407,8 @@ class Scores(callbacks.Plugin):
             
         # output
         if len(gameslist) > 0: # if we have games
-            if len(gameslist) > 10: # more than ten, break it up.
-                for N in self._batch(gameslist, 10):
+            if len(gameslist) > 7: # more than ten, break it up.
+                for N in self._batch(gameslist, 7):
                     irc.reply( string.join([item for item in N], " | ") )
             else: # less than 10.
                 irc.reply(string.join([item for item in gameslist], " | "))
