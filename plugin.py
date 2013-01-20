@@ -173,7 +173,7 @@ class Scores(callbacks.Plugin):
             return optteam
         # do some regex here to parse out the team.
         partsregex = re.compile(r'(?P<pre>\<RZ\>|\*)?(?P<team>\w+){1}(?P<rank>\(\d+\))?')
-        m = teamregex.search(optteam)
+        m = partsregex.search(optteam)
         # replace optteam with the team if we have it
         if m.group('team'): 
             optteam = m.group('team')
