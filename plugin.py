@@ -75,7 +75,7 @@ class Scores(callbacks.Plugin):
         """Handle the formatting of a status with color."""
         table = {# Red
                  'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
-                 'Canc':self._red('CAN'),
+                 'Canc':self._red('CAN'),'F/SO':self._red('F/SO'),
                  # Green
                  '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
                  '4th':self._green('4th'),
@@ -147,9 +147,8 @@ class Scores(callbacks.Plugin):
                         gametext = gametext.replace('*',self._red('<RZ>'))
                     else:
                         gametext = gametext.replace('*', self._red('<>'))
-                        
-                gparts = gametext.split(" ", 4) # make sure we split into parts and shove whatever status/time is in the rest.
-                
+                # make sure we split into parts and shove whatever status/time is in the rest.  
+                gparts = gametext.split(" ", 4) 
                 if fullteams: # gparts[0] = away/2=home. full translation table. 
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
@@ -162,8 +161,7 @@ class Scores(callbacks.Plugin):
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3]) # prepare to append.
-            # finally add whatever output is.
-            gameslist.append(output) 
+            gameslist.append(output) # finally add whatever output is.
         return gameslist # return the list of games.
 
     # translation function that needs a team and sport.
