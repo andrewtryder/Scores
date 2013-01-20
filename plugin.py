@@ -136,7 +136,7 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html)
         subdark = soup.find('div', attrs={'class':'sub dark'})
         games = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
-        
+        # setup the list for output.
         gameslist = []
 
         for game in games: # go through each game
@@ -144,12 +144,12 @@ class Scores(callbacks.Plugin):
             if " at " not in gametext: # game is in-action.
                 if sport == 'nfl' or sport == 'ncb': # special for NFL/NCB to display POS.
                     if game.find('b', attrs={'class':'red'}):
-                        gametext = gametext.replace('*',self._red('<RZ>'))
+                        gametext = gametext.replace('*','<RZ>')
                     else:
-                        gametext = gametext.replace('*', self._red('<>'))
+                        gametext = gametext.replace('*','<>')
                 # make sure we split into parts and shove whatever status/time is in the rest.  
                 gparts = gametext.split(" ", 4) 
-                if fullteams: # gparts[0] = away/2=home. full translation table. 
+                if fullteams: # gparts[0] = away/2=home. full translation table.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 # now bold the leader and format output.         
@@ -166,19 +166,36 @@ class Scores(callbacks.Plugin):
 
     # translation function that needs a team and sport.
     def _transteam(self, optteam, optsport=""):
+        # first check for db. bailout if not found.
         db_filename = self.registryValue('dbLocation')
         if not os.path.exists(db_filename):
             self.log.error("ERROR: I could not find: %s" % db_filename)
             return optteam
+        # do some regex here to parse out the team.
+        partsregex = re.compile(r'(?P<pre>\<RZ\>|\*)?(?P<team>\w+){1}(?P<rank>\(\d+\))?')
+        m = teamregex.search(optteam)
+        # replace optteam with the team if we have it
+        if m.group('team'): 
+            optteam = m.group('team')
         conn = sqlite3.connect(db_filename)
         cursor = conn.cursor()
         cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
         row = cursor.fetchone()
         cursor.close()
+        # get team back if it's in the db.
         if row is None:
-            return optteam
+            team = optteam
         else:      
-            return (str(row[0])) 
+            team = str(row[0])
+        # now lets build for output.
+        output = "" # blank string to start.
+        if m.group('pre'): # readd * or <RZ>
+            output += m.group('pre')
+        output += team # now team.
+        if m.group('rank'):
+            output += m.group('rank')
+        # finally, return output.
+        return output
 
     ###########################
     # start public functions. #
