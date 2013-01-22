@@ -78,7 +78,7 @@ class Scores(callbacks.Plugin):
                  'Canc':self._red('CAN'),'F/SO':self._red('F/SO'),
                  # Green
                  '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
-                 '4th':self._green('4th'),
+                 '4th':self._green('4th'),'OT':self._green('OT'),'SO':self._green('SO'),
                  # Yellow
                  'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
                  'PPD':self._yellow('PPD'),'Del:':self._yellow('DLT'),'Int':self._yellow('INT')
