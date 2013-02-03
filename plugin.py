@@ -46,12 +46,13 @@ class Scores(callbacks.Plugin):
             if runningcount < int(maxchars):
                 count = runningcount
                 tmpslices.append(i)
-            else:
+            elif runningcount > int(maxchars):
                 slices.append(tmpslices)
                 tmpslices = []
                 count = 0 + itemlength
                 tmpslices.append(i)
-
+            if i==len(stringlist)-1:
+                slices.append(tmpslices)
         return slices
 
     # new stuff
@@ -142,7 +143,7 @@ class Scores(callbacks.Plugin):
         url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
             req = urllib2.Request(url)
-            req.add_header("User-Agent","Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0")
+            #req.add_header("User-Agent","Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0")
             html = (urllib2.urlopen(req)).read()
             return html
         except Exception, e:
@@ -184,13 +185,14 @@ class Scores(callbacks.Plugin):
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
                 output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4]))
+                gameslist.append(output)
             else:  # TEAM at TEAM time for inactive games.
                 gparts = gametext.split(" ", 3)  # remove AM/PM in split.
                 if fullteams:  # full teams.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
-            gameslist.append(output)  # finally add whatever output is.
+                gameslist.append(output)  # finally add whatever output is.
         return gameslist  # return the list of games.
 
     # translation function that needs a team and sport.
