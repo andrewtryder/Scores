@@ -180,8 +180,8 @@ class Scores(callbacks.Plugin):
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 # last exception: color <RZ> or * if we have them.
                 if sport == 'nfl' or sport == 'ncb':  # cheap but works.
-                    gparts[0] = gparts[0].replace('<RZ>', self._red('<RZ>')).replace('*', self._red('*'))
-                    gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('*', self._red('*'))
+                    gparts[0] = gparts[0].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
+                    gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
                 output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4]))
@@ -203,11 +203,14 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR: I could not find: %s" % db_filename)
             return optteam
         # do some regex here to parse out the team.
-        partsregex = re.compile(r'(?P<pre>\<RZ\>|\*)?(?P<team>[A-Z\-&;]+)(?P<rank>\(\d+\))?')
+        partsregex = re.compile(r'(?P<pre>\<RZ\>|\<\>)?(?P<team>[A-Z\-&;]+)(?P<rank>\(\d+\))?')
+        self.log.info(optteam)
         m = partsregex.search(optteam)
+        self.log.info(optteam)
         # replace optteam with the team if we have it
         if m.group('team'):
             optteam = m.group('team')
+        self.log.info(optteam)
         conn = sqlite3.connect(db_filename)
         cursor = conn.cursor()
         cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
@@ -221,10 +224,14 @@ class Scores(callbacks.Plugin):
         # now lets build for output.
         output = ""  # blank string to start.
         if m.group('pre'):   # readd * or <RZ>
+            self.log.info("We have pre.")
             output += m.group('pre')
+        self.log.info(output)
         output += team  # now team.
+        self.log.info(output)
         if m.group('rank'):
             output += m.group('rank')
+        self.log.info(output)
         # finally, return output.
         return output
 
