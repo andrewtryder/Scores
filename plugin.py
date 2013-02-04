@@ -35,32 +35,20 @@ class Scores(callbacks.Plugin):
     threaded = True
 
     def _splicegen(self, maxchars, stringlist):
-        """ Return a list of slices to print based on maxchars string-length boundary."""
-        count = 0  # start at 0
-        slices = []  # master list to append slices to.
-        tmpslices = []  # tmp list where we append slice numbers.
-
-        for i, each in enumerate(stringlist):
-            itemlength = len(each)
-            runningcount = count + itemlength
-            if runningcount < int(maxchars):
-                count = runningcount
-                tmpslices.append(i)
-            elif runningcount > int(maxchars):
-                slices.append(tmpslices)
-                tmpslices = []
-                count = 0 + itemlength
-                tmpslices.append(i)
-            if i==len(stringlist)-1:
-                slices.append(tmpslices)
-        return slices
-
-    # new stuff
-    def _batch(self, iterable, size):
-        """http://code.activestate.com/recipes/303279/#c7"""
-        c = count()
-        for k, g in groupby(iterable, lambda x:c.next()//size):
-            yield g
+        """
+        Return a list of slices to print based on maxchars string-length boundary.
+        """
+        runningcount = 0  # start at 0
+        tmpslice = []  # tmp list where we append slice numbers.
+        for i, item in enumerate(stringlist):
+            runningcount += len(item)
+            if runningcount <= int(maxchars):
+                tmpslice.append(i)
+            else:
+                yield tmpslice
+                tmpslice = [i]
+                runningcount = len(item)
+        yield(tmpslice)
 
     def _validate(self, date, format):
         """Return true or false for valid date based on format."""
@@ -204,13 +192,10 @@ class Scores(callbacks.Plugin):
             return optteam
         # do some regex here to parse out the team.
         partsregex = re.compile(r'(?P<pre>\<RZ\>|\<\>)?(?P<team>[A-Z\-&;]+)(?P<rank>\(\d+\))?')
-        self.log.info(optteam)
         m = partsregex.search(optteam)
-        self.log.info(optteam)
         # replace optteam with the team if we have it
         if m.group('team'):
             optteam = m.group('team')
-        self.log.info(optteam)
         conn = sqlite3.connect(db_filename)
         cursor = conn.cursor()
         cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
@@ -224,14 +209,10 @@ class Scores(callbacks.Plugin):
         # now lets build for output.
         output = ""  # blank string to start.
         if m.group('pre'):   # readd * or <RZ>
-            self.log.info("We have pre.")
             output += m.group('pre')
-        self.log.info(output)
         output += team  # now team.
-        self.log.info(output)
         if m.group('rank'):
             output += m.group('rank')
-        self.log.info(output)
         # finally, return output.
         return output
 
