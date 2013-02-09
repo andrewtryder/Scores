@@ -90,7 +90,7 @@ INSERT INTO teams (sport,full,short) VALUES ('nhl','Colorado Avalanche','COL');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','New York Islanders','NYI');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','Minnesota Wild','MIN');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','Detroit Red Wings','DET');
-INSERT INTO teams (sport,full,short) VALUES ('nhl','Nasheville Predators','NSH');
+INSERT INTO teams (sport,full,short) VALUES ('nhl','Nashville Predators','NSH');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','Pittsburgh Penguins','PIT');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','St. Louis Blues','STL');
 INSERT INTO teams (sport,full,short) VALUES ('nhl','Anaheim Ducks','ANA');
@@ -108,7 +108,7 @@ INSERT INTO teams (sport,full,short) VALUES ('mlb','Los Angeles Angels','LAA');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Texas Rangers','TEX');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Boston Red Sox','BOS');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Baltimore Orioles','BAL');
-INSERT INTO teams (sport,full,short) VALUES ('mlb','Kansa City Royals','KAN');
+INSERT INTO teams (sport,full,short) VALUES ('mlb','Kansas City Royals','KAN');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Cleveland Indians','CLE');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Cincinnati Reds','CIN');
 INSERT INTO teams (sport,full,short) VALUES ('mlb','Pittsburgh Pirates','PIT');
@@ -659,3 +659,4 @@ INSERT INTO teams (sport,full,short) VALUES ('ncb','Southeastern Louisiana Lions
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Northern Kentucky Norse','NKU');
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Texas-Pan American Broncs','UTPA');
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Bradley Braves','BRAD');
+
