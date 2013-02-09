@@ -1,21 +1,17 @@
-# coding=utf8
+# -*- coding: utf-8 -*-
 ###
-# Copyright (c) 2012, spline
+# Copyright (c) 2012-2013, spline
 # All rights reserved.
-#
-#
 ###
 
 # my libs
 import urllib2
 from BeautifulSoup import BeautifulSoup, NavigableString
 import re
-import string
 import datetime
-import time
 import sqlite3
-import os
-from itertools import groupby, izip, count
+import os.path
+import base64
 
 # supybot libs
 import supybot.utils as utils
@@ -34,73 +30,14 @@ class Scores(callbacks.Plugin):
     This should describe *how* to use this plugin."""
     threaded = True
 
-    def _splicegen(self, maxchars, stringlist):
-        """
-        Return a list of slices to print based on maxchars string-length boundary.
-        """
-        runningcount = 0  # start at 0
-        tmpslice = []  # tmp list where we append slice numbers.
-        for i, item in enumerate(stringlist):
-            runningcount += len(item)
-            if runningcount <= int(maxchars):
-                tmpslice.append(i)
-            else:
-                yield tmpslice
-                tmpslice = [i]
-                runningcount = len(item)
-        yield(tmpslice)
+    def __init__(self, irc):
+        self.__parent = super(Scores, self)
+        self.__parent.__init__(irc)
+        self.scoresdb = os.path.abspath(os.path.dirname(__file__)) + '/db/scores.db'
 
-    def _validate(self, date, format):
-        """Return true or false for valid date based on format."""
-        try:
-            datetime.datetime.strptime(str(date), format) # format = "%Y%m%D"
-            return True
-        except ValueError:
-            return False
-
-    def _b64decode(self, string):
-        """Returns base64 encoded string."""
-        import base64
-        return base64.b64decode(string)
-
-    def _stripcomma(self, string):
-        """Return a string with everything after the comma removed."""
-        strings = string.split(',',1)
-        return strings[0]
-
-    def _boldleader(self, atm, asc, htm, hsc):
-        """Input away team, away score, home team, home score and bold the leader."""
-        if int(asc) > int(hsc):
-            return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
-        elif int(hsc) > int(asc):
-            return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
-        else:
-            return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
-
-    def _colorformatstatus(self, string):
-        """Handle the formatting of a status with color."""
-        table = {# Red
-                 'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
-                 'Canc':self._red('CAN'),'F/SO':self._red('F/SO'),
-                 # Green
-                 '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
-                 '4th':self._green('4th'),'OT':self._green('OT'),'SO':self._green('SO'),
-                 # Yellow
-                 'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
-                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLT'),'Int':self._yellow('INT')
-                 }
-        try:
-            return table[string]
-        except:
-            return string
-
-    def _handlestatus(self, string):
-        """Handle working with the time/innings/status of a game."""
-        strings = string.split(' ', 1 ) # split at space, everything in a list w/two.
-        if len(strings) == 2: # if we have two items, like 3:00 4th
-            return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1])) # ignore time and colorize quarter/etc.
-        else: # game is "not in progress"
-            return self._colorformatstatus(strings[0]) # just return the colorized quarter/etc due to no time.
+    ##############
+    # FORMATTING #
+    ##############
 
     def _red(self, string):
         """Returns a red string."""
@@ -126,9 +63,82 @@ class Scores(callbacks.Plugin):
         """Returns a bold/underline string."""
         return ircutils.bold(ircutils.underline(string))
 
+    ##############
+    # PROCESSING #
+    ##############
+
+    def _splicegen(self, maxchars, stringlist):
+        """Return a group of splices from a list based on the maxchars
+        string-length boundary.
+        """
+
+        runningcount = 0
+        tmpslice = []
+        for i, item in enumerate(stringlist):
+            runningcount += len(item)
+            if runningcount <= int(maxchars):
+                tmpslice.append(i)
+            else:
+                yield tmpslice
+                tmpslice = [i]
+                runningcount = len(item)
+        yield(tmpslice)
+
+    def _validate(self, date, format):
+        """Return true or false for valid date based on format."""
+
+        try:
+            datetime.datetime.strptime(str(date), format) # format = "%Y%m%D"
+            return True
+        except ValueError:
+            return False
+
+    def _stripcomma(self, string):
+        """Return a string with everything after the first comma removed."""
+
+        return string.split(',',1)[0]
+
+    def _boldleader(self, atm, asc, htm, hsc):
+        """Input away team, away score, home team, home score and bold the leader of the two."""
+
+        if int(asc) > int(hsc):
+            return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
+        elif int(hsc) > int(asc):
+            return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
+        else:
+            return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
+
+    def _colorformatstatus(self, string):
+        """Handle the formatting of a status with color."""
+
+        table = {# Red
+                 'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
+                 'Canc':self._red('CAN'),'F/SO':self._red('F/SO'),
+                 # Green
+                 '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
+                 '4th':self._green('4th'),'OT':self._green('OT'),'SO':self._green('SO'),
+                 # Yellow
+                 'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
+                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLT'),'Int':self._yellow('INT')
+                 }
+        try:
+            return table[string]
+        except:
+            return string
+
+    def _handlestatus(self, string):
+        """Handle working with the time/innings/status of a game."""
+
+        strings = string.split(' ', 1 ) # split at space, everything in a list w/two.
+        if len(strings) == 2: # if we have two items, like 3:00 4th
+            return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1])) # ignore time and colorize quarter/etc.
+        else: # game is "not in progress"
+            return self._colorformatstatus(strings[0]) # just return the colorized quarter/etc due to no time.
+
     def _fetch(self, optargs):
         """HTML Fetch."""
-        url = self._b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
+
+        url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
             req = urllib2.Request(url)
             #req.add_header("User-Agent","Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0")
@@ -138,12 +148,6 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR fetching: {0} message: {1}".format(url, e))
             return None
 
-    # div = soup.find('div', attrs={'class':'sub dark'})
-    # div.a.extract()
-    # div.a.extract()
-    # div = div.getText().replace('|','').strip()
-    # today = datetime.datetime.now().strftime('%b %d').upper()
-
     def _scores(self, html, sport="", fullteams=True):
         """Go through each "game" we receive and process the data."""
         soup = BeautifulSoup(html)
@@ -151,7 +155,6 @@ class Scores(callbacks.Plugin):
         games = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
         # setup the list for output.
         gameslist = []
-
         # go through each game
         for game in games:
             gametext = self._stripcomma(game.getText())  # remove cruft after comma.
@@ -179,29 +182,30 @@ class Scores(callbacks.Plugin):
                 if fullteams:  # full teams.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
+                if "AM" not in gparts[3] and "PM" not in gparts[3]:  # for PPD in something not started.
+                    gparts[3] = self._colorformatstatus(gparts[3])
                 output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
                 gameslist.append(output)  # finally add whatever output is.
         return gameslist  # return the list of games.
 
-    # translation function that needs a team and sport.
+    #####################
+    # DATABASE FUNCTION #
+    #####################
+
     def _transteam(self, optteam, optsport=""):
-        # first check for db. bailout if not found.
-        db_filename = self.registryValue('dbLocation')
-        if not os.path.exists(db_filename):
-            self.log.error("ERROR: I could not find: %s" % db_filename)
-            return optteam
         # do some regex here to parse out the team.
         partsregex = re.compile(r'(?P<pre>\<RZ\>|\<\>)?(?P<team>[A-Z\-&;]+)(?P<rank>\(\d+\))?')
         m = partsregex.search(optteam)
         # replace optteam with the team if we have it
         if m.group('team'):
             optteam = m.group('team')
-        conn = sqlite3.connect(db_filename)
+        # connect and do the db translation.
+        conn = sqlite3.connect(self.scoresdb)
         cursor = conn.cursor()
         cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
         row = cursor.fetchone()
         cursor.close()
-        # get team back if it's in the db.
+        # put the string/team back together with or without db output.
         if row is None:
             team = optteam
         else:
@@ -216,9 +220,9 @@ class Scores(callbacks.Plugin):
         # finally, return output.
         return output
 
-    ###########################
-    # start public functions. #
-    ###########################
+    ###################################
+    # PUBLIC FUNCTIONS (ONE PER SPORT #
+    ###################################
 
     def nba(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
@@ -227,7 +231,6 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Knick
         """
 
-        # handle optlist.
         url = 'nba/scoreboard?'
         if optlist:
             for (key, value) in optlist:
@@ -238,22 +241,18 @@ class Scores(callbacks.Plugin):
                     else:
                         url += 'date=%s' % value
 
-        # fetch html and handle if we get back None for error.
         html = self._fetch(url)
         if html == 'None':
             irc.reply("Cannot fetch NBA scores.")
             return
 
-        # now, process html and put all into gameslist.
         gameslist = self._scores(html, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]))
 
-        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        # finally, check if there is any games/output.
-        if len(gameslist) > 0:  # if we have games
-            if optinput:  # if we have input.
+        if len(gameslist) > 0:
+            if optinput:
                 count = 0
                 for item in gameslist:
                     if optinput.lower() in item.lower():
@@ -263,10 +262,10 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
+            else:
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
-        else:  # no games
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
             irc.reply("No NBA games listed.")
 
     nba = wrap(nba, [getopts({'date':('int')}), optional('text')])
@@ -278,7 +277,6 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Rang
         """
 
-        # handle optlist.
         url = 'nhl/scoreboard?'
         if optlist:
             for (key, value) in optlist:
@@ -289,22 +287,18 @@ class Scores(callbacks.Plugin):
                     else:
                         url += 'date=%s' % value
 
-        # fetch html and handle if we get back None for error.
         html = self._fetch(url)
         if html == 'None':
             irc.reply("Cannot fetch NHL scores.")
             return
 
-        # now, process html and put all into gameslist.
         gameslist = self._scores(html, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
 
-        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        # finally, check if there is any games/output.
-        if len(gameslist) > 0:  # if we have games
-            if optinput:  # if we have input.
+        if len(gameslist) > 0:
+            if optinput:
                 count = 0
                 for item in gameslist:
                     if optinput.lower() in item.lower():
@@ -314,10 +308,10 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
+            else:
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
-        else:  # no games
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
             irc.reply("No NHL games listed.")
 
     nhl = wrap(nhl, [getopts({'date':('int')}), optional('text')])
@@ -328,22 +322,18 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Pat
         """
 
-        # fetch html and handle if we get back None for error.
         html = self._fetch('nfl/scoreboard?')
         if html == 'None':
             irc.reply("Cannot fetch NFL scores.")
             return
 
-        # now, process html and put all into gameslist.
         gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]))
 
-        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        # finally, check if there is any games/output.
-        if len(gameslist) > 0:  # if we have games
-            if optinput:  # if we have input.
+        if len(gameslist) > 0:
+            if optinput:
                 count = 0
                 for item in gameslist:
                     if optinput.lower() in item.lower():
@@ -353,10 +343,10 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
+            else:
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
-        else:  # no games
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
             irc.reply("No NFL games listed.")
 
     nfl = wrap(nfl, [optional('text')])
@@ -415,7 +405,7 @@ class Scores(callbacks.Plugin):
                             break
             else:  # no input. just display games.
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
             irc.reply("No college basketball games listed.")
 
@@ -475,7 +465,7 @@ class Scores(callbacks.Plugin):
                             break
             else:  # no input. just display games.
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
             irc.reply("No college football games listed.")
 
@@ -488,7 +478,6 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Yank
         """
 
-        # handle optlist.
         url = 'mlb/scoreboard?'
         if optlist:
             for (key, value) in optlist:
@@ -499,22 +488,18 @@ class Scores(callbacks.Plugin):
                     else:
                         url += 'date=%s' % value
 
-        # fetch html and handle if we get back None for error.
         html = self._fetch(url)
         if html == 'None':
             irc.reply("Cannot fetch MLB scores.")
             return
 
-        # now, process html and put all into gameslist.
         gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]))
 
-        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        # finally, check if there is any games/output.
-        if len(gameslist) > 0:  # if we have games
-            if optinput:  # if we have input.
+        if len(gameslist) > 0:
+            if optinput:
                 count = 0
                 for item in gameslist:
                     if optinput.lower() in item.lower():
@@ -524,10 +509,10 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else: # no input. just display games.
+            else:
                 for splice in self._splicegen('380', gameslist):
-                    irc.reply(string.join([gameslist[item] for item in splice], " | "))
-        else: # no games
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
             irc.reply("No MLB games listed.")
 
     mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
@@ -619,7 +604,7 @@ class Scores(callbacks.Plugin):
         if str(golfEvent.getText()).startswith("Ryder Cup"):  # special status for Ryder Cup.
             rows = soup.find('div', attrs={'class':'ind'})
 
-            irc.reply(ircutils.mircColor(golfEvent.getText(), 'green'))
+            irc.reply(self._green(golfEvent.getText()))
             irc.reply("{0}".format(rows.getText()))
             return
         else:
@@ -638,22 +623,20 @@ class Scores(callbacks.Plugin):
             pScore = tds[2].getText()
             pRound = tds[3].getText()
             if "am" in pRound or "pm" in pRound:
-                appendString = str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " (" + pRound + ")")
+                appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
-                pRound = pRound.split()[1]  # 2nd element after space split.
-                appendString = str(pRank + ". " + ircutils.bold(pPlayer) + " " + pScore + " " + pRound) # don't need "(" here because it already has it.
+                appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound.split()[1])
             append_list.append(appendString)
 
         if len(append_list) > 0:
             if golfEvent != None and golfStatus != None:
-                irc.reply(ircutils.mircColor(golfEvent.getText(), 'green') + " - " + ircutils.bold(golfStatus.getText()))
-            irc.reply(string.join([item for item in append_list], " | "))
+                irc.reply(self._green(golfEvent.getText()) + " - " + self._bold(golfStatus.getText()))
+            irc.reply(" | ".join([item for item in append_list]))
         else:
             irc.reply("No current Golf scores.")
 
     golf = wrap(golf)
 
 Class = Scores
-
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=250:
