@@ -421,7 +421,7 @@ class Scores(callbacks.Plugin):
 
     ncb = wrap(ncb, [optional('text')])
 
-    def cfb(self, irc, msg, args, optconf, optinput):
+    def cfb(self, irc, msg, args, optconf):
         """[conference|team]
         Display College Football scores.
         Optional: input with conference to display all scores from conf. Use team to only display specific team scores.
@@ -443,11 +443,11 @@ class Scores(callbacks.Plugin):
 
         # get top25 if no conf is specified.
         if optconf and optinput :  # no optinput because we got a conf above.
-            url = 'ncb/scoreboard?groupId=%s' % validconfs['i-a']
+            url = 'ncf/scoreboard?groupId=%s' % validconfs['i-a']
         elif optconf and not optinput:
-            url = 'ncb/scoreboard?groupId=%s' % validconfs[optconf]
+            url = 'ncf/scoreboard?groupId=%s' % validconfs[optconf]
         else:
-            url = 'ncb/scoreboard?groupId=%s' % validconfs['top25']
+            url = 'ncf/scoreboard?groupId=%s' % validconfs['top25']
 
         html = self._fetch(url)
         if html == 'None':
