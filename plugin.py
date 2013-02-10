@@ -119,7 +119,7 @@ class Scores(callbacks.Plugin):
                  '4th':self._green('4th'),'OT':self._green('OT'),'SO':self._green('SO'),
                  # Yellow
                  'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
-                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLT'),'Int':self._yellow('INT')
+                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLY'),'Int':self._yellow('INT')
                  }
         try:
             return table[string]
