@@ -3,7 +3,7 @@ Supybot-Scores
 
 Purpose
 
-    Supybot plugin for displaying live sports scores. Works with MLB, NBA, NFL, CFB, NCB, NHL. 
+    Supybot plugin for displaying live sports scores. Works with MLB, NBA, NFL, CFB, NCB, NHL, Golf and Tennis. 
 
 Instructions
 
@@ -18,5 +18,5 @@ Commands
     mlb [--date YYMMDD] - to fetch baseball scores
     cfb [conf] - to fetch college football scores (NCAA DIV. I-A (FBS))
     ncb [conf] - to fetch college basketball scores (NCAA DIV. I-A (FBS))
-    
-    
+    tennis [mens|womens] - to fetch tennis scores.
+    golf - to fetch golf scores
