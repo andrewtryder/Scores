@@ -148,11 +148,11 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR fetching: {0} message: {1}".format(url, e))
             return None
 
-    def _scores(self, html, sport="", fullteams=True):
+    def _scores(self, html, sport="", fullteams=True, showlater=True):
         """Go through each "game" we receive and process the data."""
         soup = BeautifulSoup(html)
-        subdark = soup.find('div', attrs={'class':'sub dark'})
-        games = soup.findAll('div', attrs={'id':re.compile('^game.*?')})
+        subdark = soup.find('div', attrs={'class': 'sub dark'})
+        games = soup.findAll('div', attrs={'id': re.compile('^game.*?')})
         # setup the list for output.
         gameslist = []
         # go through each game
@@ -176,8 +176,9 @@ class Scores(callbacks.Plugin):
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
                 output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4]))
-                gameslist.append(output)
             else:  # TEAM at TEAM time for inactive games.
+                if not showlater:  # don't show these if !
+                    break
                 gparts = gametext.split(" ", 3)  # remove AM/PM in split.
                 if fullteams:  # full teams.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
@@ -185,7 +186,9 @@ class Scores(callbacks.Plugin):
                 if "AM" not in gparts[3] and "PM" not in gparts[3]:  # for PPD in something not started.
                     gparts[3] = self._colorformatstatus(gparts[3])
                 output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
-                gameslist.append(output)  # finally add whatever output is.
+
+            gameslist.append(output)  # finally add whatever output is.
+
         return gameslist  # return the list of games.
 
     #####################
@@ -246,7 +249,13 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch NBA scores.")
             return
 
-        gameslist = self._scores(html, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]))
+        if optinput and optinput == "!":
+            showlater = False
+            optinput = None
+        else:
+            showlater = True
+
+        gameslist = self._scores(html, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
 
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
@@ -287,12 +296,18 @@ class Scores(callbacks.Plugin):
                     else:
                         url += 'date=%s' % value
 
+        if optinput and optinput == "!":  # check for ! - playing/played
+            showlater = False # change function variable.
+            optinput = None # now delete due to below.
+        else:
+            showlater = True
+
         html = self._fetch(url)
         if html == 'None':
             irc.reply("Cannot fetch NHL scores.")
             return
 
-        gameslist = self._scores(html, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]))
+        gameslist = self._scores(html, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
 
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
@@ -327,7 +342,13 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch NFL scores.")
             return
 
-        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]))
+        if optinput and optinput == "!":
+            showlater = False
+            optinput = None
+        else:
+            showlater = True
+
+        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
 
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
@@ -493,7 +514,13 @@ class Scores(callbacks.Plugin):
             irc.reply("Cannot fetch MLB scores.")
             return
 
-        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]))
+        if optinput and optinput == "!":
+            showlater = False
+            optinput = None
+        else:
+            showlater = True
+
+        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
 
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
