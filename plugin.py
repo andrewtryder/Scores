@@ -126,14 +126,32 @@ class Scores(callbacks.Plugin):
         except:
             return string
 
-    def _handlestatus(self, string):
+    def _mlbformatstatus(self, string):
+        """Handle MLB specific status here."""
+        
+        if string.startswith('F'):  # final or F/10 for innings.
+            string = string.replace('Final', 'F')  # Final to F.
+            string = self._red(string)
+        elif string.startswith('Top ') or string.startswith('Bot '):  # Top or Bot.
+            string = string.replace('Top ', 'T')  # Top to T.
+            string = string.replace('Bot ', 'B')  # Bot to B.
+            string = string.replace('th', '').replace('nd', '').replace('rd', '')  # remove endings.
+            string = self._green(string)
+        # there will be Bot? PPD? DLY? Add conditionals here.
+        return string
+
+    def _handlestatus(self, sport, string):
         """Handle working with the time/innings/status of a game."""
 
-        strings = string.split(' ', 1 ) # split at space, everything in a list w/two.
-        if len(strings) == 2: # if we have two items, like 3:00 4th
-            return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1])) # ignore time and colorize quarter/etc.
-        else: # game is "not in progress"
-            return self._colorformatstatus(strings[0]) # just return the colorized quarter/etc due to no time.
+        if sport != 'mlb':  # handle all but MLB here.
+            strings = string.split(' ', 1)  # split at space, everything in a list w/two.
+            if len(strings) == 2:  # if we have two items, like 3:00 4th.
+                return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1]))  # ignore time and colorize quarter/etc.
+            else:  # game is "not in progress"
+                return self._colorformatstatus(strings[0])  # just return the colorized quarter/etc due to no time.
+        else:  # handle MLB here.
+            string = self._mlbformatstatus(string)
+            return string
 
     def _fetch(self, optargs):
         """HTML Fetch."""
@@ -165,7 +183,7 @@ class Scores(callbacks.Plugin):
                     else:
                         gametext = gametext.replace('*', '<>')
                 # make sure we split into parts and shove whatever status/time is in the rest.
-                gparts = gametext.split(" ",4)
+                gparts = gametext.split(" ", 4)
                 if fullteams:  # gparts[0] = away/2=home. full translation table.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
@@ -175,7 +193,7 @@ class Scores(callbacks.Plugin):
                     gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
-                output = "{0} {1}".format(gamescore, self._handlestatus(gparts[4]))
+                output = "{0} {1}".format(gamescore, self._handlestatus(sport, gparts[4]))
             else:  # TEAM at TEAM time for inactive games.
                 if not showlater:  # don't show these if !
                     break
