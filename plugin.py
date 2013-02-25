@@ -372,6 +372,58 @@ class Scores(callbacks.Plugin):
 
     nfl = wrap(nfl, [optional('text')])
 
+    def mlb(self, irc, msg, args, optlist, optinput):
+        """[--date YYYYMMDD] [optional]
+        Display MLB scores.
+        Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
+        Specify a string to match after to only display specific scores. Ex: Yank
+        """
+
+        url = 'mlb/scoreboard?'
+        if optlist:
+            for (key, value) in optlist:
+                if key == 'date':
+                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
+                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                        return
+                    else:
+                        url += 'date=%s' % value
+
+        html = self._fetch(url)
+        if html == 'None':
+            irc.reply("Cannot fetch MLB scores.")
+            return
+
+        if optinput and optinput == "!":
+            showlater = False
+            optinput = None
+        else:
+            showlater = True
+
+        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+
+        if len(gameslist) > 0:
+            if optinput:
+                count = 0
+                for item in gameslist:
+                    if optinput.lower() in item.lower():
+                        if count < 10:
+                            irc.reply(item)
+                            count += 1
+                        else:
+                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+                            break
+            else:
+                for splice in self._splicegen('380', gameslist):
+                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
+            irc.reply("No MLB games listed.")
+
+    mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
+
     def ncb(self, irc, msg, args, optconf):
         """[conference|team]
         Display College Basketball scores.
@@ -492,41 +544,49 @@ class Scores(callbacks.Plugin):
 
     cfb = wrap(cfb, [optional('text')])
 
-    def mlb(self, irc, msg, args, optlist, optinput):
-        """[--date YYYYMMDD] [optional]
-        Display MLB scores.
-        Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
-        Specify a string to match after to only display specific scores. Ex: Yank
+    def ncw(self, irc, msg, args, optconf):
+        """[conference|team]
+        Display Women's College Basketball scores.
+        Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score.
+        Ex: SEC or Bama
         """
 
-        url = 'mlb/scoreboard?'
-        if optlist:
-            for (key, value) in optlist:
-                if key == 'date':
-                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
-                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
-                        return
-                    else:
-                        url += 'date=%s' % value
+        # basketball confs.
+        validconfs = {'top25':'999', 'a10':'3', 'acc':'2', 'ameast':'1', 'big12':'8', 'bigeast':'4', 'bigsky':'5', 'bigsouth':'6', 'big10':'7',
+                      'bigwest':'9', 'c-usa':'11', 'caa':'10', 'greatwest':'57', 'horizon':'45', 'independent':'43', 'ivy':'12', 'maac':'13',
+                      'mac':'14', 'meac':'16', 'mvc':'18', 'mwc':'44', 'div-i':'50', 'nec':'19', 'non-div-i':'51', 'ovc':'20', 'pac12':'21',
+                      'patriot':'22', 'sec':'23', 'southern':'24', 'southland':'25', 'summit':'49', 'sunbelt':'27', 'swac':'26', 'wac':'30', 'wcc':'29' }
+
+        # if we have a specific conf to display, get the id.
+        optinput = None
+        if optconf:
+            optconf = optconf.lower()
+            if optconf not in validconfs:
+                optinput = optconf
+
+        # get top25 if no conf is specified.
+        if optconf and optinput :  # no optinput because we got a conf above.
+            url = 'ncw/scoreboard?groupId=%s' % validconfs['div-i']
+        elif optconf and not optinput:
+            url = 'ncw/scoreboard?groupId=%s' % validconfs[optconf]
+        else:
+            url = 'ncw/scoreboard?groupId=%s' % validconfs['top25']
 
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch MLB scores.")
+            irc.reply("Cannot fetch women's college basketball scores.")
             return
 
-        if optinput and optinput == "!":
-            showlater = False
-            optinput = None
-        else:
-            showlater = True
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport='ncb', fullteams=self.registryValue('fullteams', msg.args[0]))
 
-        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
-
+        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        if len(gameslist) > 0:
-            if optinput:
+        # finally, check if there is any games/output.
+        if len(gameslist) > 0:  # if we have games
+            if optinput:  # if we have input.
                 count = 0
                 for item in gameslist:
                     if optinput.lower() in item.lower():
@@ -536,14 +596,13 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:
+            else:  # no input. just display games.
                 for splice in self._splicegen('380', gameslist):
                     irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("No MLB games listed.")
+        else:  # no games
+            irc.reply("No women's college basketball games listed.")
 
-    mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
-
+    ncw = wrap(ncw, [optional('text')])
 
     def tennis(self, irc, msg, args, optmatch):
         """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
@@ -598,7 +657,7 @@ class Scores(callbacks.Plugin):
                 for item in each.contents:
                     if isinstance(item, NavigableString):
                         matchText.append(item.strip())
-                output.append("{0} :: {1}".format(status," ".join(matchText)))
+                output.append("{0} :: {1}".format(status, " ".join(matchText)))
 
         # now output.
         if len(output) < 1:
@@ -612,7 +671,6 @@ class Scores(callbacks.Plugin):
             irc.reply("{0}".format(" | ".join(output)))
 
     tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
-
 
     def golf(self, irc, msg, args):
         """
