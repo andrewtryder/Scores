@@ -128,7 +128,7 @@ class Scores(callbacks.Plugin):
 
     def _mlbformatstatus(self, string):
         """Handle MLB specific status here."""
-        
+
         if string.startswith('F'):  # final or F/10 for innings.
             string = string.replace('Final', 'F')  # Final to F.
             string = self._red(string)
@@ -290,8 +290,12 @@ class Scores(callbacks.Plugin):
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
             else:
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:
             irc.reply("No NBA games listed.")
 
@@ -342,8 +346,12 @@ class Scores(callbacks.Plugin):
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
             else:
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:
             irc.reply("No NHL games listed.")
 
@@ -383,8 +391,12 @@ class Scores(callbacks.Plugin):
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
             else:
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:
             irc.reply("No NFL games listed.")
 
@@ -435,8 +447,12 @@ class Scores(callbacks.Plugin):
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
             else:
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:
             irc.reply("No MLB games listed.")
 
@@ -494,9 +510,13 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+            else:
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
             irc.reply("No college basketball games listed.")
 
@@ -554,9 +574,13 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+            else:
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
             irc.reply("No college football games listed.")
 
@@ -614,9 +638,13 @@ class Scores(callbacks.Plugin):
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:  # no input. just display games.
-                for splice in self._splicegen('380', gameslist):
-                    irc.reply(" | ".join([gameslist[item] for item in splice]))
+            else:
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
             irc.reply("No women's college basketball games listed.")
 
