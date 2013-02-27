@@ -135,7 +135,7 @@ class Scores(callbacks.Plugin):
         elif string.startswith('Top ') or string.startswith('Bot '):  # Top or Bot.
             string = string.replace('Top ', 'T')  # Top to T.
             string = string.replace('Bot ', 'B')  # Bot to B.
-            string = string.replace('th', '').replace('nd', '').replace('rd', '')  # remove endings.
+            string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
         # there will be Bot? PPD? DLY? Add conditionals here.
         return string
