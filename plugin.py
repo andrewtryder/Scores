@@ -113,6 +113,7 @@ class Scores(callbacks.Plugin):
 
         table = {# Red
                  'Final':self._red('F'),'F/OT':self._red('F/OT'),'F/2OT':self._red('F/2OT'),
+                 'F/3OT':self._red('F/3OT'),'F/4OT':self._red('F/4OT'),'F/5OT':self._red('F/5OT'),
                  'Canc':self._red('CAN'),'F/SO':self._red('F/SO'),
                  # Green
                  '1st':self._green('1st'),'2nd':self._green('2nd'),'3rd':self._green('3rd'),
@@ -158,12 +159,10 @@ class Scores(callbacks.Plugin):
 
         url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
-            req = urllib2.Request(url)
-            #req.add_header("User-Agent","Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0")
-            html = (urllib2.urlopen(req)).read()
-            return html
-        except Exception, e:
-            self.log.error("ERROR fetching: {0} message: {1}".format(url, e))
+            page = utils.web.getUrl(url)
+            return page
+        except utils.web.Error as e:
+            self.log.error("I could not open {0} error: {1}".format(url,e))
             return None
 
     def _scores(self, html, sport="", fullteams=True, showlater=True):
@@ -319,8 +318,8 @@ class Scores(callbacks.Plugin):
                         url += 'date=%s' % value
 
         if optinput and optinput == "!":  # check for ! - playing/played
-            showlater = False # change function variable.
-            optinput = None # now delete due to below.
+            showlater = False  # change function variable.
+            optinput = None  # now delete due to below.
         else:
             showlater = True
 
@@ -767,6 +766,49 @@ class Scores(callbacks.Plugin):
             irc.reply("No current Golf scores.")
 
     golf = wrap(golf)
+
+    def nascar(self, irc, msg, args, optrace):
+        """[sprintcup|nationwide]
+        Display active NASCAR standings in race.
+        Defaults to Sprint Cup.
+        """
+
+        if optrace:
+            optrace = optrace.lower()
+            if optrace == "sprintcup":
+                raceType = "2"
+            elif optrace == "nationwide":
+                raceType = "3"
+            else:
+                raceType = "2"
+        else:
+            raceType = "2"
+
+        html = self._fetch('rpm/nascar/eventresult?seriesId=%s' % raceType)
+        if html == 'None':
+            irc.reply("Cannot fetch NASCAR stats.")
+            return
+
+        soup = BeautifulSoup(html)
+        race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
+        racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
+
+        standings = []
+
+        rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing':'0', 'width': '100%'})
+        rows = rtable.findAll('tr')
+        for row in rows:
+            tds = row.findAll('td')
+            place = tds[0].getText().strip()
+            driver = tds[1].getText().strip()
+            behind = tds[2].getText().strip()
+            standings.append("{0}. {1} - {2}".format(place, self._bold(driver), behind))
+
+        irc.reply("{0} :: {1}".format(self._red(race), self._ul(racestatus)))
+        irc.reply("{0}".format(" | ".join(standings)))
+
+    nascar = wrap(nascar, [optional('somethingWithoutSpaces')])
+
 
 Class = Scores
 
