@@ -738,7 +738,7 @@ class Scores(callbacks.Plugin):
             irc.reply("{0}".format(rows.getText()))
             return
         else:
-            table = soup.find('table', attrs={'class':'wide'})
+            table = soup.find('table', attrs={'class': 'wide'})
             if not table:
                 irc.reply("Could not find golf results. Tournament not going on?")
                 return
@@ -752,6 +752,7 @@ class Scores(callbacks.Plugin):
             pPlayer = tds[1].getText()
             pScore = tds[2].getText()
             pRound = tds[3].getText()
+            pRound = pRound.replace('(', '').replace(')', '')
             if "am" in pRound or "pm" in pRound:
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
