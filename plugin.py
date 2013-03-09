@@ -796,7 +796,7 @@ class Scores(callbacks.Plugin):
 
         standings = []
 
-        rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing':'0', 'width': '100%'})
+        rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing': '0', 'width': '100%'})
         rows = rtable.findAll('tr')[1:]
         for row in rows:
             tds = row.findAll('td')
