@@ -158,6 +158,7 @@ class Scores(callbacks.Plugin):
         """HTML Fetch."""
 
         url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
+	self.log.info(str(url))
         try:
             page = utils.web.getUrl(url)
             return page
@@ -176,7 +177,7 @@ class Scores(callbacks.Plugin):
         for game in games:
             gametext = self._stripcomma(game.getText())  # remove cruft after comma.
             if " at " not in gametext:  # game is in-action.
-                if sport == 'nfl' or sport == 'ncb':  # special for NFL/NCB to display POS.
+                if sport == 'nfl' or sport == 'ncf':  # special for NFL/NCB to display POS.
                     if game.find('b', attrs={'class': 'red'}):
                         gametext = gametext.replace('*', '<RZ>')
                     else:
