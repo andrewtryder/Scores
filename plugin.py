@@ -457,11 +457,12 @@ class Scores(callbacks.Plugin):
 
     mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
 
-    def ncb(self, irc, msg, args, optconf):
-        """[conference|team]
+    def ncb(self, irc, msg, args, optlist, optconf):
+        """[--date YYYYMMDD] [tournament|conference|team]
         Display College Basketball scores.
-        Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score.
-        Ex: SEC or Bama
+        Optional: Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
+        Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score. Ex: SEC or Bama.
+        Optional: input tournament to display scores. Ex: ncaa, nit.
         """
 
         # basketball confs.
@@ -485,6 +486,16 @@ class Scores(callbacks.Plugin):
             url = 'ncb/scoreboard?groupId=%s' % validconfs[optconf]
         else:
             url = 'ncb/scoreboard?groupId=%s' % validconfs['top25']
+
+        # handle date
+        if optlist:
+            for (key, value) in optlist:
+                if key == 'date':
+                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
+                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                        return
+                    else:
+                        url += '&date=%s' % value
 
         html = self._fetch(url)
         if html == 'None':
@@ -520,7 +531,7 @@ class Scores(callbacks.Plugin):
         else:  # no games
             irc.reply("No college basketball games listed.")
 
-    ncb = wrap(ncb, [optional('text')])
+    ncb = wrap(ncb, [getopts({'date':('int')}), optional('text')])
 
     def cfb(self, irc, msg, args, optconf):
         """[conference|team]
