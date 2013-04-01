@@ -133,9 +133,10 @@ class Scores(callbacks.Plugin):
         if string.startswith('F'):  # final or F/10 for innings.
             string = string.replace('Final', 'F')  # Final to F.
             string = self._red(string)
-        elif string.startswith('Top ') or string.startswith('Bot '):  # Top or Bot.
+        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End'):  # Top or Bot.
             string = string.replace('Top ', 'T')  # Top to T.
             string = string.replace('Bot ', 'B')  # Bot to B.
+            string = string.replace('End ', 'E')  # End to E.
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
         # there will be Bot? PPD? DLY? Add conditionals here.
