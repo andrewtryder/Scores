@@ -140,6 +140,11 @@ class Scores(callbacks.Plugin):
             string = string.replace('Mid ', 'M')  # Mid to M.
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
+        elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del'):  # delayed
+            string = string.replace('Dly ', 'DEL')
+            string = string.replace('Del ', 'DEL')
+            string = string.replace('PPD ', 'DEL')
+            string = self._yellow(string)
         # there will be Bot? PPD? DLY? Add conditionals here.
         return string
 
