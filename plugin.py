@@ -120,7 +120,8 @@ class Scores(callbacks.Plugin):
                  '4th':self._green('4th'),'OT':self._green('OT'),'SO':self._green('SO'),
                  # Yellow
                  'Half':self._yellow('H'),'Dly':self._yellow('DLY'),'DLY':self._yellow('DLY'),
-                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLY'),'Int':self._yellow('INT')
+                 'PPD':self._yellow('PPD'),'Del:':self._yellow('DLY'),'Int':self._yellow('INT'),
+                 'Del':self._yellow('DLY')
                  }
         try:
             return table[string]
@@ -141,9 +142,9 @@ class Scores(callbacks.Plugin):
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
         elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del'):  # delayed
-            string = string.replace('Dly ', 'DEL')
-            string = string.replace('Del ', 'DEL')
-            string = string.replace('PPD ', 'DEL')
+            string = string.replace('Dly ', 'DLY')
+            string = string.replace('Del ', 'DLY')
+            string = string.replace('PPD ', 'DLY')
             string = self._yellow(string)
         # there will be Bot? PPD? DLY? Add conditionals here.
         return string
