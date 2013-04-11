@@ -12,7 +12,6 @@ import datetime
 import sqlite3
 import os.path
 import base64
-
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -131,7 +130,6 @@ class Scores(callbacks.Plugin):
     def _mlbformatstatus(self, string):
         """Handle MLB specific status here."""
 
-        string = string.strip() # strip first.
         # conditionals for each.
         if string.startswith('F'):  # final or F/10 for innings.
             string = string.replace('Final', 'F')  # Final to F.
@@ -178,7 +176,7 @@ class Scores(callbacks.Plugin):
     def _scores(self, html, sport="", fullteams=True, showlater=True):
         """Go through each "game" we receive and process the data."""
         soup = BeautifulSoup(html)
-        subdark = soup.find('div', attrs={'class': 'sub dark'})
+        # subdark = soup.find('div', attrs={'class': 'sub dark'})
         games = soup.findAll('div', attrs={'id': re.compile('^game.*?')})
         # setup the list for output.
         gameslist = []
@@ -751,9 +749,10 @@ class Scores(callbacks.Plugin):
 
     tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
 
-    def golf(self, irc, msg, args):
-        """
-        Display current Golf scores from a PGA tournament.
+    def golf(self, irc, msg, args, optinput):
+        """[golfer]
+        Display current Golf scores from a PGA tournament. Specify golfer to look for a specific player.
+        Ex: woods
         """
 
         html = self._fetch('golf/eventresult?')
@@ -776,7 +775,7 @@ class Scores(callbacks.Plugin):
             if not table:
                 irc.reply("Could not find golf results. Tournament not going on?")
                 return
-            rows = table.findAll('tr')[1:14]  # skip header row. max 13.
+            rows = table.findAll('tr')[1:]  # skip header row.
 
         append_list = []
 
@@ -786,21 +785,31 @@ class Scores(callbacks.Plugin):
             pPlayer = tds[1].getText()
             pScore = tds[2].getText()
             pRound = tds[3].getText()
-            pRound = pRound.replace('(', '').replace(')', '')
-            if "am" in pRound or "pm" in pRound:
+            pRound = pRound.replace('(', '').replace(')', '')  # remove ( )
+            if "am" in pRound or "pm" in pRound:  # append string conditional if they started or not.
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound.split()[1])
             append_list.append(appendString)
 
-        if len(append_list) > 0:
+        if not optinput:  # just show the leaderboard
             if golfEvent != None and golfStatus != None:
-                irc.reply(self._green(golfEvent.getText()) + " - " + self._bold(golfStatus.getText()))
+                irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
             irc.reply(" | ".join([item for item in append_list]))
-        else:
-            irc.reply("No current Golf scores.")
+        else:  # display a specific score.
+            if golfEvent != None and golfStatus != None:
+                irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
+            count = 0
+            for each in append_list:
+                if optinput.lower() in each.lower():  # if we find a match.
+                    if count < 5:  # only show five.
+                        irc.reply(each)
+                        count += 1
+                    else:  # above this, display the error.
+                        irc.reply("I found too many results for '{0}'. Please specify something more specific".format(optinput))
+                        break
 
-    golf = wrap(golf)
+    golf = wrap(golf, [optional('text')])
 
     def nascar(self, irc, msg, args, optrace):
         """[sprintcup|nationwide]
