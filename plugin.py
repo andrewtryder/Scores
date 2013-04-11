@@ -778,7 +778,7 @@ class Scores(callbacks.Plugin):
             rows = table.findAll('tr')[1:]  # skip header row.
 
         append_list = []
-
+        # process rows. each row is a player.
         for row in rows:
             tds = row.findAll('td')
             pRank = tds[0].getText()
@@ -792,13 +792,12 @@ class Scores(callbacks.Plugin):
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound.split()[1])
             append_list.append(appendString)
 
+        # output time.
+        if golfEvent != None and golfStatus != None:  # header/tournament
+            irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
         if not optinput:  # just show the leaderboard
-            if golfEvent != None and golfStatus != None:
-                irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
             irc.reply(" | ".join([item for item in append_list]))
         else:  # display a specific score.
-            if golfEvent != None and golfStatus != None:
-                irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
             count = 0
             for each in append_list:
                 if optinput.lower() in each.lower():  # if we find a match.
