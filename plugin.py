@@ -131,6 +131,8 @@ class Scores(callbacks.Plugin):
     def _mlbformatstatus(self, string):
         """Handle MLB specific status here."""
 
+        string = string.strip() # strip first.
+        # conditionals for each.
         if string.startswith('F'):  # final or F/10 for innings.
             string = string.replace('Final', 'F')  # Final to F.
             string = self._red(string)
@@ -142,11 +144,11 @@ class Scores(callbacks.Plugin):
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
         elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del'):  # delayed
-            string = string.replace('Dly ', 'DLY')
-            string = string.replace('Del ', 'DLY')
-            string = string.replace('PPD ', 'DLY')
-            string = self._yellow(string)
-        # there will be Bot? PPD? DLY? Add conditionals here.
+            if string == "PPD":  # PPD is one thing, otherwise..
+                string = self._yellow('PPD')
+            else:  # it can be "DLY: End 5th. I don't want to do conditionals here.
+                string = self._yellow('DLY')
+        # return now.
         return string
 
     def _handlestatus(self, sport, string):
