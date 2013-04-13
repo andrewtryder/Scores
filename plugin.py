@@ -786,7 +786,7 @@ class Scores(callbacks.Plugin):
             pScore = tds[2].getText()
             pRound = tds[3].getText()
             pRound = pRound.replace('(', '').replace(')', '')  # remove ( )
-            if "am" in pRound or "pm" in pRound:  # append string conditional if they started or not.
+            if "am" in pRound or "pm" in pRound or pScore == "CUT":  # append string conditional if they started or not.
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound.split()[1])
