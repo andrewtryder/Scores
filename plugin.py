@@ -785,11 +785,17 @@ class Scores(callbacks.Plugin):
             pPlayer = tds[1].getText()
             pScore = tds[2].getText()
             pRound = tds[3].getText()
-            pRound = pRound.replace('(', '').replace(')', '')  # remove ( )
+            pRound = pRound.replace('(', '').replace(')', '')  # remove ( ). We process pRound later.
+
             if "am" in pRound or "pm" in pRound or pScore == "CUT":  # append string conditional if they started or not.
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
-                appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound.split()[1])
+                pRound = pRound.split(' ', 1)  # we split -2 (F), but might not be two.
+                if len(pRound) == 2:  # normally, it looks like -2 (F). We want the F.
+                    pRound = pRound[1]
+                else:  # It is just -9 like for a playoff.
+                    pRound = pRound[0]
+                appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             append_list.append(appendString)
 
         # output time.
