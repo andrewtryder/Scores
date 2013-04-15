@@ -763,14 +763,14 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html)
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
-
+        # process the event/title and status.
         if str(golfEvent.getText()).startswith("Ryder Cup"):  # special status for Ryder Cup.
             rows = soup.find('div', attrs={'class':'ind'})
 
             irc.reply(self._green(golfEvent.getText()))
             irc.reply("{0}".format(rows.getText()))
             return
-        else:
+        else:  # regular games.
             table = soup.find('table', attrs={'class': 'wide'})
             if not table:
                 irc.reply("Could not find golf results. Tournament not going on?")
@@ -788,7 +788,10 @@ class Scores(callbacks.Plugin):
             pRound = pRound.replace('(', '').replace(')', '')  # remove ( ). We process pRound later.
 
             if "am" in pRound or "pm" in pRound or pScore == "CUT":  # append string conditional if they started or not.
-                appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
+                if pScore == "CUT":  # we won't have a pRound score in this case
+                    appendString = "{0}. {1} {2}".format(pRank, self._bold(pPlayer), pScore)
+                else:
+                    appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             else:
                 pRound = pRound.split(' ', 1)  # we split -2 (F), but might not be two.
                 if len(pRound) == 2:  # normally, it looks like -2 (F). We want the F.
