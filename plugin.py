@@ -141,10 +141,10 @@ class Scores(callbacks.Plugin):
             string = string.replace('Mid ', 'M')  # Mid to M.
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
-        elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del'):  # delayed
+        elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del') or string.startswith('Susp'):  # delayed
             if string == "PPD":  # PPD is one thing, otherwise..
                 string = self._yellow('PPD')
-            else:  # it can be "DLY: End 5th. I don't want to do conditionals here.
+            else:  # it can be "DLY: End 5th." or "Susp: Bot 9th". I don't want to do conditionals here.
                 string = self._yellow('DLY')
         # return now.
         return string
