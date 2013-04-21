@@ -150,7 +150,7 @@ class Scores(callbacks.Plugin):
         return string
 
     def _handlestatus(self, sport, string):
-        """Handle working with the time/innings/status of a game."""
+        """Handle working with the time/status of a game."""
 
         if sport != 'mlb':  # handle all but MLB here.
             strings = string.split(' ', 1)  # split at space, everything in a list w/two.
@@ -749,15 +749,32 @@ class Scores(callbacks.Plugin):
 
     tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
 
-    def golf(self, irc, msg, args, optinput):
-        """[golfer]
-        Display current Golf scores from a PGA tournament. Specify golfer to look for a specific player.
-        Ex: woods
+    def golf(self, irc, msg, args, optseries, optinput):
+        """[pga|web.com|champions|lpga|euro]
+        Display current Golf scores from a PGA tournament. Specify a specific series to show different scores.
+        Ex: lpga
         """
 
-        html = self._fetch('golf/eventresult?')
+        if optseries:
+            optseries = optseries.lower()
+            if optseries == "pga":
+                seriesId = "1"
+            if optseries == "web.com":
+                seriesId = "2"
+            elif optseries == "champions":
+                seriesId = "3"
+            elif optseries == "lpga":
+                seriesId = "4"
+            elif optseries == "euro":
+                seriesId = "5"
+            else:
+                seriesId = "1"
+        else:  # go pga if we don't have a series.
+            seriesId = "1"
+
+        html = self._fetch('golf/eventresult?seriesId=%s' % seriesId)
         if html == 'None':
-            irc.reply("Cannot fetch Golf scores.")
+            irc.reply("ERROR: Cannot fetch Golf scores.")
             return
 
         soup = BeautifulSoup(html)
@@ -770,10 +787,10 @@ class Scores(callbacks.Plugin):
             irc.reply(self._green(golfEvent.getText()))
             irc.reply("{0}".format(rows.getText()))
             return
-        else:  # regular games.
+        else:  # regular tournaments.
             table = soup.find('table', attrs={'class': 'wide'})
             if not table:
-                irc.reply("Could not find golf results. Tournament not going on?")
+                irc.reply("ERROR: Could not find golf results. Tournament not going on?")
                 return
             rows = table.findAll('tr')[1:]  # skip header row.
 
@@ -786,13 +803,13 @@ class Scores(callbacks.Plugin):
             pScore = tds[2].getText()
             pRound = tds[3].getText()
             pRound = pRound.replace('(', '').replace(')', '')  # remove ( ). We process pRound later.
-
+            # handle strings differently, depending on if started or not. not started also includes cut.
             if "am" in pRound or "pm" in pRound or pScore == "CUT":  # append string conditional if they started or not.
                 if pScore == "CUT":  # we won't have a pRound score in this case
                     appendString = "{0}. {1} {2}".format(pRank, self._bold(pPlayer), pScore)
                 else:
                     appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
-            else:
+            else:  # player has started.
                 pRound = pRound.split(' ', 1)  # we split -2 (F), but might not be two.
                 if len(pRound) == 2:  # normally, it looks like -2 (F). We want the F.
                     pRound = pRound[1]
@@ -806,8 +823,8 @@ class Scores(callbacks.Plugin):
             irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
         if not optinput:  # just show the leaderboard
             irc.reply(" | ".join([item for item in append_list]))
-        else:  # display a specific score.
-            count = 0
+        else:  # display a specific player's score.
+            count = 0  # for max 5.
             for each in append_list:
                 if optinput.lower() in each.lower():  # if we find a match.
                     if count < 5:  # only show five.
@@ -817,7 +834,7 @@ class Scores(callbacks.Plugin):
                         irc.reply("I found too many results for '{0}'. Please specify something more specific".format(optinput))
                         break
 
-    golf = wrap(golf, [optional('text')])
+    golf = wrap(golf, [optional('somethingWithoutSpaces'), optional('text')])
 
     def nascar(self, irc, msg, args, optrace):
         """[sprintcup|nationwide]
