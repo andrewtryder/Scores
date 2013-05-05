@@ -328,7 +328,7 @@ class Scores(callbacks.Plugin):
         """
 
          # first, declare sport.
-        optsport = 'nha'
+        optsport = 'nhl'
         # base url.
         url = '%s/scoreboard?' % optsport
         # declare variables we manip with input + optlist.
