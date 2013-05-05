@@ -5,7 +5,6 @@
 ###
 
 # my libs
-import urllib2
 from BeautifulSoup import BeautifulSoup, NavigableString
 import re
 import datetime
@@ -170,7 +169,7 @@ class Scores(callbacks.Plugin):
             page = utils.web.getUrl(url)
             return page
         except utils.web.Error as e:
-            self.log.error("I could not open {0} error: {1}".format(url,e))
+            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
             return None
 
     def _scores(self, html, sport="", fullteams=True, showlater=True):
@@ -259,52 +258,65 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Knick
         """
 
-        url = 'nba/scoreboard?'
-        if optlist:
+        # first, declare sport.
+        optsport = 'nba'
+        # base url.
+        url = '%s/scoreboard?' % optsport
+        # declare variables we manip with input + optlist.
+        showlater = True  # show all. ! below negates.
+        # first, we have to handle if optinput is today or tomorrow.
+        if optinput:
+            optinput = optinput.lower()  # lower to process.
+            if optinput == "today":
+                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "tomorrow":
+                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
+                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "!":
+                showlater = False  # only show completed and active (not future) games.
+                optinput = None  # have to declare so we're not looking for games below.
+        # handle optlist.
+        if optlist:  # we only have --date, for now.
             for (key, value) in optlist:
-                if key == 'date':
-                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
-                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                if key == 'date':  # this will override today and tomorrow.
+                    if len(str(value)) != 8 or not self._validate(value, '%Y%m%d'):
+                        irc.reply("ERROR: Invalid date. Must be YYYYmmdd. Ex: --date=20120904")
                         return
                     else:
                         url += 'date=%s' % value
-
+        # process url and fetch.
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch NBA scores.")
+            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
-
-        if optinput and optinput == "!":
-            showlater = False
-            optinput = None
-        else:
-            showlater = True
-
-        gameslist = self._scores(html, sport='nba', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
-
+        # process games.
+        gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+        # strip color/bold/ansi if option is enabled.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
-
-        if len(gameslist) > 0:
-            if optinput:
-                count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
-                        if count < 10:
-                            irc.reply(item)
-                            count += 1
-                        else:
-                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+        # output time.
+        if len(gameslist) > 0:  # process here if we have games. sometimes we do not.
+            if optinput:  # we're looking for a specific team/string.
+                count = 0  # start at 0.
+                for item in gameslist:  # iterate through our items.
+                    if optinput in item.lower():  # we're lower from above. lower item to match.
+                        if count < 10:  # if less than 10 items out.
+                            irc.reply(item)  # output item.
+                            count += 1  # ++count.
+                        else:  # once we're over 10 items out.
+                            irc.reply("ERROR: I found too many matches for '{0}' in {1}. Try something more specific.".format(optinput, optsport.upper()))
                             break
-            else:
-                if self.registryValue('lineByLineScores', msg.args[0]):
+            else:  # no optinput so we are just displaying games.
+                if self.registryValue('lineByLineScores', msg.args[0]):  # if you want line-by-line scores, even for all.
                     for game in gameslist:
-                        irc.reply(game)
-                else:
+                        irc.reply(game)  # output each.
+                else:  # we're gonna display as much as we can on each line.
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("No NBA games listed.")
+        else:  # we found no games to display.
+            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
     nba = wrap(nba, [getopts({'date':('int')}), optional('text')])
 
@@ -315,52 +327,65 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Rang
         """
 
-        url = 'nhl/scoreboard?'
-        if optlist:
+         # first, declare sport.
+        optsport = 'nha'
+        # base url.
+        url = '%s/scoreboard?' % optsport
+        # declare variables we manip with input + optlist.
+        showlater = True  # show all. ! below negates.
+        # first, we have to handle if optinput is today or tomorrow.
+        if optinput:
+            optinput = optinput.lower()  # lower to process.
+            if optinput == "today":
+                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "tomorrow":
+                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
+                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "!":
+                showlater = False  # only show completed and active (not future) games.
+                optinput = None  # have to declare so we're not looking for games below.
+        # handle optlist.
+        if optlist:  # we only have --date, for now.
             for (key, value) in optlist:
-                if key == 'date':
-                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
-                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                if key == 'date':  # this will override today and tomorrow.
+                    if len(str(value)) != 8 or not self._validate(value, '%Y%m%d'):
+                        irc.reply("ERROR: Invalid date. Must be YYYYmmdd. Ex: --date=20120904")
                         return
                     else:
                         url += 'date=%s' % value
-
-        if optinput and optinput == "!":  # check for ! - playing/played
-            showlater = False  # change function variable.
-            optinput = None  # now delete due to below.
-        else:
-            showlater = True
-
+        # process url and fetch.
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch NHL scores.")
+            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
-
-        gameslist = self._scores(html, sport='nhl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
-
+        # process games.
+        gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+        # strip color/bold/ansi if option is enabled.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
-
-        if len(gameslist) > 0:
-            if optinput:
-                count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
-                        if count < 10:
-                            irc.reply(item)
-                            count += 1
-                        else:
-                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+        # output time.
+        if len(gameslist) > 0:  # process here if we have games. sometimes we do not.
+            if optinput:  # we're looking for a specific team/string.
+                count = 0  # start at 0.
+                for item in gameslist:  # iterate through our items.
+                    if optinput in item.lower():  # we're lower from above. lower item to match.
+                        if count < 10:  # if less than 10 items out.
+                            irc.reply(item)  # output item.
+                            count += 1  # ++count.
+                        else:  # once we're over 10 items out.
+                            irc.reply("ERROR: I found too many matches for '{0}' in {1}. Try something more specific.".format(optinput, optsport.upper()))
                             break
-            else:
-                if self.registryValue('lineByLineScores', msg.args[0]):
+            else:  # no optinput so we are just displaying games.
+                if self.registryValue('lineByLineScores', msg.args[0]):  # if you want line-by-line scores, even for all.
                     for game in gameslist:
-                        irc.reply(game)
-                else:
+                        irc.reply(game)  # output each.
+                else:  # we're gonna display as much as we can on each line.
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("No NHL games listed.")
+        else:  # we found no games to display.
+            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
     nhl = wrap(nhl, [getopts({'date':('int')}), optional('text')])
 
@@ -416,52 +441,65 @@ class Scores(callbacks.Plugin):
         Specify a string to match after to only display specific scores. Ex: Yank
         """
 
-        url = 'mlb/scoreboard?'
-        if optlist:
+        # first, declare sport.
+        optsport = 'mlb'
+        # base url.
+        url = '%s/scoreboard?' % optsport
+        # declare variables we manip with input + optlist.
+        showlater = True  # show all. ! below negates.
+        # first, we have to handle if optinput is today or tomorrow.
+        if optinput:
+            optinput = optinput.lower()  # lower to process.
+            if optinput == "today":
+                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "tomorrow":
+                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
+                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+                optinput = None  # have to declare so we're not looking for games below.
+            elif optinput == "!":
+                showlater = False  # only show completed and active (not future) games.
+                optinput = None  # have to declare so we're not looking for games below.
+        # handle optlist.
+        if optlist:  # we only have --date, for now.
             for (key, value) in optlist:
-                if key == 'date':
-                    if len(str(value)) !=8 or not self._validate(value, '%Y%m%d'):
-                        irc.reply("Invalid date. Must be YYYYmmdd. Ex: 20120904")
+                if key == 'date':  # this will override today and tomorrow.
+                    if len(str(value)) != 8 or not self._validate(value, '%Y%m%d'):
+                        irc.reply("ERROR: Invalid date. Must be YYYYmmdd. Ex: --date=20120904")
                         return
                     else:
                         url += 'date=%s' % value
-
+        # process url and fetch.
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch MLB scores.")
+            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
-
-        if optinput and optinput == "!":
-            showlater = False
-            optinput = None
-        else:
-            showlater = True
-
-        gameslist = self._scores(html, sport='mlb', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
-
+        # process games.
+        gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+        # strip color/bold/ansi if option is enabled.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
-
-        if len(gameslist) > 0:
-            if optinput:
-                count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
-                        if count < 10:
-                            irc.reply(item)
-                            count += 1
-                        else:
-                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+        # output time.
+        if len(gameslist) > 0:  # process here if we have games. sometimes we do not.
+            if optinput:  # we're looking for a specific team/string.
+                count = 0  # start at 0.
+                for item in gameslist:  # iterate through our items.
+                    if optinput in item.lower():  # we're lower from above. lower item to match.
+                        if count < 10:  # if less than 10 items out.
+                            irc.reply(item)  # output item.
+                            count += 1  # ++count.
+                        else:  # once we're over 10 items out.
+                            irc.reply("ERROR: I found too many matches for '{0}' in {1}. Try something more specific.".format(optinput, optsport.upper()))
                             break
-            else:
-                if self.registryValue('lineByLineScores', msg.args[0]):
+            else:  # no optinput so we are just displaying games.
+                if self.registryValue('lineByLineScores', msg.args[0]):  # if you want line-by-line scores, even for all.
                     for game in gameslist:
-                        irc.reply(game)
-                else:
+                        irc.reply(game)  # output each.
+                else:  # we're gonna display as much as we can on each line.
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("No MLB games listed.")
+        else:  # we found no games to display.
+            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
     mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
 
