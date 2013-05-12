@@ -742,7 +742,7 @@ class Scores(callbacks.Plugin):
 
         html = self._fetch('general/tennis/dailyresults?matchType=%s' % matchType)
         if html == 'None':
-            irc.reply("Cannot fetch Tennis scores.")
+            irc.reply("ERROR: Cannot fetch Tennis scores.")
             return
 
         # one easy sanity check.
@@ -893,7 +893,7 @@ class Scores(callbacks.Plugin):
 
         html = self._fetch('rpm/nascar/eventresult?seriesId=%s' % raceType)
         if html == 'None':
-            irc.reply("Cannot fetch NASCAR stats.")
+            irc.reply("ERROR: Cannot fetch NASCAR stats.")
             return
 
         soup = BeautifulSoup(html)
@@ -915,6 +915,49 @@ class Scores(callbacks.Plugin):
         irc.reply("{0}".format(" | ".join(standings)))
 
     nascar = wrap(nascar, [optional('somethingWithoutSpaces')])
+
+    def racing(self, irc, msg, args, optrace):
+        """[f1|indycar]
+        Display race results.
+        Defaults to F1.
+        """
+
+        if optrace:
+            optrace = optrace.lower()
+            if optrace == "f1":
+                raceType = "6"
+            elif optrace == "indycar":
+                raceType = "1"
+            else:
+                raceType = "6"
+        else:
+            raceType = "6"
+
+        html = self._fetch('rpm/eventresult?season=-1&seriesId=%s' % raceType)
+        if html == 'None':
+            irc.reply("ERROR: Cannot fetch {0} stats.".format(racetype.title()))
+            return
+
+        soup = BeautifulSoup(html)
+        race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
+        racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
+        # table with rows.
+        rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing': '0', 'width': '100%'})
+        rows = rtable.findAll('tr')[1:]
+        # list container for output
+        standings = []
+        # one row per racer
+        for row in rows:
+            tds = row.findAll('td')
+            place = tds[0].getText().strip()
+            driver = tds[1].getText().strip()
+            # behind = tds[2].getText().strip()
+            standings.append("{0}. {1}".format(place, self._bold(driver)))
+
+        irc.reply("{0} :: {1}".format(self._red(race), self._ul(racestatus)))
+        irc.reply("{0}".format(" | ".join(standings)))
+
+    racing = wrap(racing, [optional('somethingWithoutSpaces')])
 
 
 Class = Scores
