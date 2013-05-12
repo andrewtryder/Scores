@@ -875,7 +875,7 @@ class Scores(callbacks.Plugin):
     golf = wrap(golf, [optional('somethingWithoutSpaces'), optional('text')])
 
     def nascar(self, irc, msg, args, optrace):
-        """[sprintcup|nationwide]
+        """[sprintcup|nationwide|trucks]
         Display active NASCAR standings in race.
         Defaults to Sprint Cup.
         """
@@ -886,6 +886,8 @@ class Scores(callbacks.Plugin):
                 raceType = "2"
             elif optrace == "nationwide":
                 raceType = "3"
+            elif optrace == "trucks":
+                raceType = "4"
             else:
                 raceType = "2"
         else:
@@ -899,11 +901,12 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html)
         race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
         racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
-
-        standings = []
-
+        # table with results
         rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing': '0', 'width': '100%'})
         rows = rtable.findAll('tr')[1:]
+        # list container for out.
+        standings = []
+        # one row per driver.
         for row in rows:
             tds = row.findAll('td')
             place = tds[0].getText().strip()
