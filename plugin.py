@@ -341,7 +341,7 @@ class Scores(callbacks.Plugin):
         else:  # we found no games to display.
             irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
-    nba = wrap(nba, [getopts({'date':('int')}), optional('text')])
+    nba = wrap(nba, [getopts({'date': ('int')}), optional('text')])
 
     def nhl(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
@@ -406,52 +406,7 @@ class Scores(callbacks.Plugin):
         else:  # we found no games to display.
             irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
-    nhl = wrap(nhl, [getopts({'date':('int')}), optional('text')])
-
-    def nfl(self, irc, msg, args, optinput):
-        """[team]
-        Display NFL scores.
-        Specify a string to match after to only display specific scores. Ex: Pat
-        """
-
-        html = self._fetch('nfl/scoreboard?')
-        if html == 'None':
-            irc.reply("Cannot fetch NFL scores.")
-            return
-
-        if optinput and optinput == "!":
-            showlater = False
-            optinput = None
-        else:
-            showlater = True
-
-        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
-
-        if self.registryValue('disableANSI', msg.args[0]):
-            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
-
-        if len(gameslist) > 0:
-            if optinput:
-                count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
-                        if count < 10:
-                            irc.reply(item)
-                            count += 1
-                        else:
-                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
-                            break
-            else:
-                if self.registryValue('lineByLineScores', msg.args[0]):
-                    for game in gameslist:
-                        irc.reply(game)
-                else:
-                    for splice in self._splicegen('380', gameslist):
-                        irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("No NFL games listed.")
-
-    nfl = wrap(nfl, [optional('text')])
+    nhl = wrap(nhl, [getopts({'date': ('int')}), optional('text')])
 
     def mlb(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
@@ -516,7 +471,57 @@ class Scores(callbacks.Plugin):
         else:  # we found no games to display.
             irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
-    mlb = wrap(mlb, [getopts({'date':('int')}), optional('text')])
+    mlb = wrap(mlb, [getopts({'date': ('int')}), optional('text')])
+
+    def nfl(self, irc, msg, args, optinput):
+        """[team]
+        Display NFL scores.
+        Specify a string to match after to only display specific scores. Ex: Pat
+        """
+
+         # first, declare sport.
+        optsport = 'nfl'
+        # base url.
+        url = '%s/scoreboard?' % optsport
+        # process url and fetch.
+        html = self._fetch(url)
+        if html == 'None':
+            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
+            return
+
+        if optinput and optinput == "!":
+            showlater = False
+            optinput = None
+        else:
+            showlater = True
+
+        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+
+        if len(gameslist) > 0:
+            if optinput:
+                count = 0
+                for item in gameslist:
+                    if optinput.lower() in item.lower():
+                        if count < 10:
+                            irc.reply(item)
+                            count += 1
+                        else:
+                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+                            break
+            else:
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:
+            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
+
+    nfl = wrap(nfl, [optional('text')])
 
     def ncb(self, irc, msg, args, optlist, optconf):
         """[--date YYYYMMDD] [tournament|conference|team]
@@ -560,7 +565,7 @@ class Scores(callbacks.Plugin):
 
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch NCB scores.")
+            irc.reply("ERROR: Cannot fetch NCB scores.")
             return
 
         # now, process html and put all into gameslist.
@@ -590,9 +595,9 @@ class Scores(callbacks.Plugin):
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
-            irc.reply("No college basketball games listed.")
+            irc.reply("ERROR: No college basketball games listed.")
 
-    ncb = wrap(ncb, [getopts({'date':('int')}), optional('text')])
+    ncb = wrap(ncb, [getopts({'date': ('int')}), optional('text')])
 
     def cfb(self, irc, msg, args, optconf):
         """[conference|team]
@@ -624,7 +629,7 @@ class Scores(callbacks.Plugin):
 
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch CFB scores.")
+            irc.reply("ERROR: Cannot fetch CFB scores.")
             return
 
         # now, process html and put all into gameslist.
@@ -654,7 +659,7 @@ class Scores(callbacks.Plugin):
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
-            irc.reply("No college football games listed.")
+            irc.reply("ERROR: No college football games listed.")
 
     cfb = wrap(cfb, [optional('text')])
 
@@ -700,7 +705,7 @@ class Scores(callbacks.Plugin):
 
         html = self._fetch(url)
         if html == 'None':
-            irc.reply("Cannot fetch women's college basketball scores.")
+            irc.reply("ERROR: Cannot fetch women's college basketball scores.")
             return
 
         # now, process html and put all into gameslist.
@@ -730,9 +735,9 @@ class Scores(callbacks.Plugin):
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
         else:  # no games
-            irc.reply("No women's college basketball games listed.")
+            irc.reply("ERROR: No women's college basketball games listed.")
 
-    ncw = wrap(ncw, [getopts({'date':('int')}), optional('text')])
+    ncw = wrap(ncw, [getopts({'date': ('int')}), optional('text')])
 
     def tennis(self, irc, msg, args, optmatch):
         """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
@@ -833,8 +838,8 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html)
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
-        # process the event/title and status.
-        if str(golfEvent.getText()).startswith("Ryder Cup"):  # special status for Ryder Cup.
+        # conditional for special status for Ryder Cup.
+        if str(golfEvent.getText()).startswith("Ryder Cup"):
             rows = soup.find('div', attrs={'class':'ind'})
 
             irc.reply(self._green(golfEvent.getText()))
@@ -870,7 +875,6 @@ class Scores(callbacks.Plugin):
                     pRound = pRound[0]
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
             append_list.append(appendString)
-
         # output time.
         if golfEvent != None and golfStatus != None:  # header/tournament
             irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
