@@ -32,6 +32,7 @@ class Scores(callbacks.Plugin):
         self.__parent = super(Scores, self)
         self.__parent.__init__(irc)
         self.scoresdb = os.path.abspath(os.path.dirname(__file__)) + '/db/scores.db'
+        self.WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
     ##############
     # FORMATTING #
@@ -166,6 +167,7 @@ class Scores(callbacks.Plugin):
 
         url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
+            self.log.info(url)
             page = utils.web.getUrl(url)
             return page
         except utils.web.Error as e:
@@ -215,9 +217,34 @@ class Scores(callbacks.Plugin):
 
         return gameslist  # return the list of games.
 
-    #####################
-    # DATABASE FUNCTION #
-    #####################
+    def _datetodatetime(self, optdate):
+        """Convert a string like yesterday to datetime object and return YYYYMMDD string."""
+
+        if optdate == "lastweek":
+            datedelta = -7
+        elif optdate == "yesterday":
+            datedelta = -1
+        elif optdate == "today" or optdate =="tonight":
+            datedelta = 0
+        elif optdate == "tomorrow":
+            datedelta = 1
+        elif optdate == "nextweek":
+            datedelta = 7
+        elif optdate in self.WEEKDAYS:  # weekday.
+            weekdaynum = self.WEEKDAYS.index(optdate)  # day of the week (index) requested.
+            dayoftheweek = datetime.datetime.now().isoweekday()  # today's day.
+            if weekdaynum >= dayoftheweek:  # if day is ahead but not next week.
+                datedelta = weekdaynum - dayoftheweek  # simple +math.
+            else:
+                datedelta = 7+(weekdaynum-dayoftheweek)  # add in the -dayoftheweek
+        # calculate the datedelta and return a string.
+        datestr = (datetime.date.today() + datetime.timedelta(days=datedelta)).strftime('%Y%m%d')
+        # now return.
+        return datestr
+
+    ######################
+    # DATABASE FUNCTIONS #
+    ######################
 
     def _transteam(self, optteam, optsport=""):
         # do some regex here to parse out the team.
@@ -267,12 +294,8 @@ class Scores(callbacks.Plugin):
         # first, we have to handle if optinput is today or tomorrow.
         if optinput:
             optinput = optinput.lower()  # lower to process.
-            if optinput == "today":
-                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
-                optinput = None  # have to declare so we're not looking for games below.
-            elif optinput == "tomorrow":
-                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
-                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+            if optinput in ['yesterday', 'today', 'tomorrow', 'tonight'] or optinput in self.WEEKDAYS:
+                url += 'date=%s' % self._datetodatetime(optinput)  # centralize our date ops.
                 optinput = None  # have to declare so we're not looking for games below.
             elif optinput == "!":
                 showlater = False  # only show completed and active (not future) games.
@@ -336,12 +359,8 @@ class Scores(callbacks.Plugin):
         # first, we have to handle if optinput is today or tomorrow.
         if optinput:
             optinput = optinput.lower()  # lower to process.
-            if optinput == "today":
-                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
-                optinput = None  # have to declare so we're not looking for games below.
-            elif optinput == "tomorrow":
-                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
-                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+            if optinput in ['yesterday', 'today', 'tomorrow', 'tonight'] or optinput in self.WEEKDAYS:
+                url += 'date=%s' % self._datetodatetime(optinput)  # centralize our date ops.
                 optinput = None  # have to declare so we're not looking for games below.
             elif optinput == "!":
                 showlater = False  # only show completed and active (not future) games.
@@ -450,12 +469,8 @@ class Scores(callbacks.Plugin):
         # first, we have to handle if optinput is today or tomorrow.
         if optinput:
             optinput = optinput.lower()  # lower to process.
-            if optinput == "today":
-                url += 'date=%s' % datetime.date.today().strftime('%Y%m%d')
-                optinput = None  # have to declare so we're not looking for games below.
-            elif optinput == "tomorrow":
-                tomorrow = datetime.date.today() + datetime.timedelta(days=1)  # today+1
-                url += 'date=%s' % tomorrow.strftime('%Y%m%d')
+            if optinput in ['yesterday', 'today', 'tomorrow', 'tonight'] or optinput in self.WEEKDAYS:
+                url += 'date=%s' % self._datetodatetime(optinput)  # centralize our date ops.
                 optinput = None  # have to declare so we're not looking for games below.
             elif optinput == "!":
                 showlater = False  # only show completed and active (not future) games.
