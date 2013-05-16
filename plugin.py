@@ -739,15 +739,18 @@ class Scores(callbacks.Plugin):
 
     ncw = wrap(ncw, [getopts({'date': ('int')}), optional('text')])
 
-    def tennis(self, irc, msg, args, optmatch):
+    def tennis(self, irc, msg, args, optmatch, optinput):
         """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
         Display current Tennis scores. Defaults to Men's Singles.
-        Call with argument to display others. Ex: womens
+        Call with argument to display others.
+        Ex: womens
         """
 
         if optmatch:
             optmatch = optmatch.lower()
-            if optmatch == "womens":
+            if optmatch == "mens":
+                matchType = "1"
+            elif optmatch == "womens":
                 matchType = "2"
             elif optmatch == "mensdoubles":
                 matchType = "3"
@@ -755,61 +758,62 @@ class Scores(callbacks.Plugin):
                 matchType = "4"
             elif optmatch == "mixeddoubles":
                 matchType = "6"
-            else:
+            else:  # default to mens.
                 matchType = "1"
         else:
             matchType = "1"
-
-        html = self._fetch('general/tennis/dailyresults?matchType=%s' % matchType)
+        # build and fetch url.
+        html = self._fetch('general/tennis/dailyresults?matchType=' + matchType)
         if html == 'None':
             irc.reply("ERROR: Cannot fetch Tennis scores.")
             return
-
         # one easy sanity check.
         if "There are no matches scheduled." in html:
-            irc.reply("ERROR: There are no matches scheduled for: %s" % optmatch)
+            irc.reply("ERROR: There are no {0} tennis matches scheduled.".format(optmatch.title()))
             return
-
         # process html.
-        soup = BeautifulSoup(html,convertEntities=BeautifulSoup.HTML_ENTITIES)
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES)
         matches = soup.findAll('div', attrs={'class':re.compile('^ind|^ind alt')})
         if len(matches) < 1:  # second sanity check.
-            irc.reply("ERROR: No %s tennis matches found" % optmatch)
+            irc.reply("ERROR: No {0} tennis matches found.".format(optmatch.title()))
             return
         title = soup.find('div', attrs={'class':'sec row'})
-        tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]
-
-        # now iterate through each match and populate output.
+        tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]  # there are two here so grab the 2nd (1).
+        # output container.
         output = []
+        # each 'each' is a match.
         for each in matches:
             if each.find('b'):  # <b> means it is a tennis match.
                 status = each.find('b').extract()
                 if status.text == "Final":
                     status = self._red("F")
                 else:
-                    status = self._bold(status.text)
-                matchText = []
+                    status = self._bold(status.getText())
+                matchText = []  # smoosh the results together into here.
                 for item in each.contents:
                     if isinstance(item, NavigableString):
                         matchText.append(item.strip())
                 output.append("{0} :: {1}".format(status, " ".join(matchText)))
-
         # now output.
-        if len(output) < 1:
-            irc.reply("Error: no matches to output.")
-        elif len(output) < 6:
-            irc.reply("{0} {1}".format(self._bold(title.getText()),self._bold(tennisRound.getText())))
-            for each in output:
-                irc.reply("{0}".format(each))
-        else:
+        if not optinput:  # just display scores.
             irc.reply("{0} {1}".format(self._bold(title.getText()),self._bold(tennisRound.getText())))
             irc.reply("{0}".format(" | ".join(output)))
+        else:  # looking for something specific.
+            for each in output:
+                count = 0  # for max 5.
+                if optinput.lower() in each.lower():  # if we find a match.
+                    if count < 5:  # only show five.
+                        irc.reply(each)
+                        count += 1
+                    else:  # above this, display the error.
+                        irc.reply("I found too many results for '{0}'. Please specify something more specific".format(optinput))
+                        break
 
-    tennis = wrap(tennis, [optional('somethingWithoutSpaces')])
+    tennis = wrap(tennis, [optional('somethingWithoutSpaces'), optional('text')])
 
     def golf(self, irc, msg, args, optseries, optinput):
         """[pga|web.com|champions|lpga|euro]
-        Display current Golf scores from a PGA tournament. Specify a specific series to show different scores.
+        Display current Golf scores from a tournament. Specify a specific series to show different scores.
         Ex: lpga
         """
 
@@ -825,23 +829,23 @@ class Scores(callbacks.Plugin):
                 seriesId = "4"
             elif optseries == "euro":
                 seriesId = "5"
-            else:
+            else:  # default to pga tour.
                 seriesId = "1"
+                optinput = optseries  # this means someone did a command like 'golf woods' and wants tiger's score.
         else:  # go pga if we don't have a series.
             seriesId = "1"
-
-        html = self._fetch('golf/eventresult?seriesId=%s' % seriesId)
+        # build and fetch url.
+        html = self._fetch('golf/eventresult?seriesId=' + seriesId)
         if html == 'None':
             irc.reply("ERROR: Cannot fetch Golf scores.")
             return
-
+        # process html.
         soup = BeautifulSoup(html)
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
-        # conditional for special status for Ryder Cup.
-        if str(golfEvent.getText()).startswith("Ryder Cup"):
+        # check for Ryder Cup.
+        if golfEvent.getText().startswith("Ryder Cup"):  # if Ryder Cup found, it should just display scores.
             rows = soup.find('div', attrs={'class':'ind'})
-
             irc.reply(self._green(golfEvent.getText()))
             irc.reply("{0}".format(rows.getText()))
             return
@@ -851,7 +855,7 @@ class Scores(callbacks.Plugin):
                 irc.reply("ERROR: Could not find golf results. Tournament not going on?")
                 return
             rows = table.findAll('tr')[1:]  # skip header row.
-
+        # container for output.
         append_list = []
         # process rows. each row is a player.
         for row in rows:
@@ -874,6 +878,7 @@ class Scores(callbacks.Plugin):
                 else:  # It is just -9 like for a playoff.
                     pRound = pRound[0]
                 appendString = "{0}. {1} {2} ({3})".format(pRank, self._bold(pPlayer), pScore, pRound)
+            # append now.
             append_list.append(appendString)
         # output time.
         if golfEvent != None and golfStatus != None:  # header/tournament
@@ -895,8 +900,8 @@ class Scores(callbacks.Plugin):
 
     def nascar(self, irc, msg, args, optrace):
         """[sprintcup|nationwide|trucks]
-        Display active NASCAR standings in race.
-        Defaults to Sprint Cup.
+        Display active NASCAR results from most current race.
+        Defaults to Sprint Cup. Specify 'nationwide' or 'trucks' for other series.
         """
 
         if optrace:
@@ -907,32 +912,29 @@ class Scores(callbacks.Plugin):
                 raceType = "3"
             elif optrace == "trucks":
                 raceType = "4"
-            else:
+            else:  # default to sprintcup.
                 raceType = "2"
-        else:
+        else:  # default to sprintcup.
             raceType = "2"
-
-        html = self._fetch('rpm/nascar/eventresult?seriesId=%s' % raceType)
+        # build and fetch url.
+        html = self._fetch('rpm/nascar/eventresult?seriesId=' + raceType)
         if html == 'None':
             irc.reply("ERROR: Cannot fetch NASCAR stats.")
             return
-
+        # process html.
         soup = BeautifulSoup(html)
         race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
         racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
         # table with results
         rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing': '0', 'width': '100%'})
-        rows = rtable.findAll('tr')[1:]
+        rows = rtable.findAll('tr')[1:]  # header row is 0.
         # list container for out.
         standings = []
         # one row per driver.
         for row in rows:
-            tds = row.findAll('td')
-            place = tds[0].getText().strip()
-            driver = tds[1].getText().strip()
-            behind = tds[2].getText().strip()
-            standings.append("{0}. {1} - {2}".format(place, self._bold(driver), behind))
-
+            tds = [item.getText().strip() for item in row.findAll('td')]
+            standings.append("{0}. {1} - {2}".format(tds[0], self._bold(tds[1]), tds[2]))
+        # output time.
         irc.reply("{0} :: {1}".format(self._red(race), self._ul(racestatus)))
         irc.reply("{0}".format(" | ".join(standings)))
 
@@ -944,7 +946,7 @@ class Scores(callbacks.Plugin):
         Defaults to F1.
         """
 
-        if optrace:
+        if optrace:  # defaults to F1.
             optrace = optrace.lower()
             if optrace == "f1":
                 raceType = "6"
@@ -954,28 +956,25 @@ class Scores(callbacks.Plugin):
                 raceType = "6"
         else:
             raceType = "6"
-
-        html = self._fetch('rpm/eventresult?season=-1&seriesId=%s' % raceType)
+        # build and fetch url.
+        html = self._fetch('rpm/eventresult?season=-1&seriesId=' + raceType)
         if html == 'None':
-            irc.reply("ERROR: Cannot fetch {0} stats.".format(racetype.title()))
+            irc.reply("ERROR: Cannot fetch racing results.")
             return
-
+        # process html.
         soup = BeautifulSoup(html)
         race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
         racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
         # table with rows.
         rtable = soup.find('table', attrs={'class': 'wide', 'cellspacing': '0', 'width': '100%'})
-        rows = rtable.findAll('tr')[1:]
+        rows = rtable.findAll('tr')[1:]  # first is the header.
         # list container for output
         standings = []
         # one row per racer
         for row in rows:
-            tds = row.findAll('td')
-            place = tds[0].getText().strip()
-            driver = tds[1].getText().strip()
-            # behind = tds[2].getText().strip()
-            standings.append("{0}. {1}".format(place, self._bold(driver)))
-
+            tds = [item.getText().strip() for item in row.findAll('td')]
+            standings.append("{0}. {1}".format(tds[0], self._bold(tds[1])))
+        # output time.
         irc.reply("{0} :: {1}".format(self._red(race), self._ul(racestatus)))
         irc.reply("{0}".format(" | ".join(standings)))
 
