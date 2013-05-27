@@ -3,7 +3,9 @@ Supybot-Scores
 
 Purpose
 
-    Supybot plugin for displaying live sports scores. Works with MLB, NBA, NFL, CFB, NCB, NHL, Golf, NASCAR and Tennis.
+    Supybot plugin for displaying live sports scores.
+    So far, it supports:
+        - MLB, NBA, NFL, CFB, NCB, WCB, NHL, Golf, NASCAR, F1, Indycar, D1BB and Tennis.
 
 Instructions
 
@@ -19,9 +21,11 @@ Commands
     cfb [conf] - to fetch college football scores (NCAA DIV. I-A (FBS))
     ncb [conf] - to fetch college basketball scores (NCAA DIV. I-A (FBS))
     wcb [conf] - to fetch women's college basketball scores (NCAA DIV. I-A (FBS))
+    wnba [--date YYMMDD] - to fetch WNBA scores.
     tennis [mens|womens|mensdoubles|womensdoubles] - to fetch tennis scores.
-    golf - to fetch golf scores
-    nascar [nationwide|sprintcup] - show an active race/stats. (works for nationwide/sprint cup)
+    golf [pga|web.com|champions|lpga|euro]- to fetch golf scores
+    nascar [nationwide|sprintcup|trucks] - show an active race/stats. (works for nationwide/sprint cup)
+    d1bb - fetch Division 1 baseball scores.
 
 Command Specifics
 
@@ -43,7 +47,11 @@ Command Specifics
 
 Config Variables
 
-    I have a few options that I'll consider "undocumented" as I don't recommend them but you can play with
-    via the config variable system. /msg <botname> config search scores
+    There are a few documented and undocumented options.
 
-    Each variable name should document itself but I recommend keeping things default.
+    First, I have a corresponding database that can display "full teams" vs. their abbreviation (ex: NYK)
+
+    - /msg <bot> config plugins.Scores.fullteams True/False
+
+    This is helpful for searching (ex: !nba New York) but also takes up more room.
+
