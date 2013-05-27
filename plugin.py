@@ -1079,8 +1079,12 @@ class Scores(callbacks.Plugin):
             games = table.findAll('table', attrs={'rules':'none', 'frame':'box', 'border':'1'})
             for game in games:  # iterate over games.
                 # conf = game.findPrevious('h4').getText()
+                self.log.info(str(game))
                 away = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[0]
-                awayteam = away.find('a').extract()
+                if away.find('a'):  # teams will always be in a link.
+                    awayteam = away.find('a').extract()
+                else:
+                    continue
                 home = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[1]
                 hometeam = home.find('a').extract()
                 awayscore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[0].getText()
@@ -1088,17 +1092,20 @@ class Scores(callbacks.Plugin):
                 status = game.find('td', attrs={'width':'76'}).getText()
                 # now we slowly build the string to append, conditionally.
                 if away.text == '':  # no ranking.
-                    at = "{0}".format(awayteam.getText())
-                else:  # ranking, ie: #20 LSU
-                    at = "{0} {1}".format(away.getText(), awayteam.getText())
+                    at = "{0}".format(awayteam.getText().replace('&amp;', '&'))
+                else:  # ranking, ie: #20 LSU.
+                    at = "{0}({1})".format(awayteam.getText().replace('&amp;', '&'), away.getText().replace('#', ''))
                 if home.text == '':  # no ranking.
-                    ht = "{0}".format(hometeam.getText())
+                    ht = "{0}".format(hometeam.getText().replace('&amp;', '&'))
                 else:  # ranking.
-                    ht = "{0} {1}".format(home.getText(), hometeam.getText())
-                # now bold the leader between the two using internal function.
-                gamescore = self._boldleader(at, awayscore, ht, homescore)
-                # add score and format status using mlbhandler above.
-                gamestr = "{0} {1}".format(gamescore, self._handlestatus('mlb', status))
+                    ht = "{0}({1})".format(hometeam.getText().replace('&amp;', '&'), home.getText().replace('#', ''))
+                # if the game has happened or is happening, bold the leader.
+                if "PM" not in status or "AM" not in status:  # game has not started.
+                    gamestr = "{0} vs. {1} {2}".format(at, ht, status)
+                else:  # game has started.
+                    gamescore = self._boldleader(at, awayscore, ht, homescore)
+                    # add score and format status using mlbhandler above.
+                    gamestr = "{0} {1}".format(gamescore, self._handlestatus('mlb', status))
                 d1games.append(gamestr)  # finally, add.
         # now output.
         if optinput:  # if we're searching for a team.
