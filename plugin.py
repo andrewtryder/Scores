@@ -131,10 +131,12 @@ class Scores(callbacks.Plugin):
         """Handle MLB specific status here."""
 
         # conditionals for each.
-        if string.startswith('F'):  # final or F/10 for innings.
+        if string.startswith('F'):  # Final or F/10. Game is complete.
+            string = string.replace('FINAL', 'F')  # FINAL to F.
             string = string.replace('Final', 'F')  # Final to F.
+            string = string.replace(' ', '')  # Remove spaces (d1bb).
             string = self._red(string)
-        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid'):  # Top or Bot.
+        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid'):  # Top/Bot/End/Mid (Game Going on)
             string = string.replace('Top ', 'T')  # Top to T.
             string = string.replace('Bot ', 'B')  # Bot to B.
             string = string.replace('End ', 'E')  # End to E.
@@ -152,22 +154,23 @@ class Scores(callbacks.Plugin):
     def _handlestatus(self, sport, string):
         """Handle working with the time/status of a game."""
 
-        if sport != 'mlb':  # handle all but MLB here.
+        if sport == 'mlb':  # handle mlb here.
+            string = self._mlbformatstatus(string)
+            return string
+        if sport != 'mlb':  # everything else.
             strings = string.split(' ', 1)  # split at space, everything in a list w/two.
             if len(strings) == 2:  # if we have two items, like 3:00 4th.
                 return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1]))  # ignore time and colorize quarter/etc.
             else:  # game is "not in progress"
                 return self._colorformatstatus(strings[0])  # just return the colorized quarter/etc due to no time.
-        else:  # handle MLB here.
-            string = self._mlbformatstatus(string)
-            return string
 
-    def _fetch(self, optargs):
-        """HTML Fetch."""
+    def _fetch(self, optargs, logurl=False):
+        """Fetch and return HTML."""
 
         url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
-            self.log.info(url)
+            if logurl:
+                self.log.info(url)
             page = utils.web.getUrl(url)
             return page
         except utils.web.Error as e:
@@ -176,7 +179,8 @@ class Scores(callbacks.Plugin):
 
     def _scores(self, html, sport="", fullteams=True, showlater=True):
         """Go through each "game" we receive and process the data."""
-        soup = BeautifulSoup(html)
+
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         # subdark = soup.find('div', attrs={'class': 'sub dark'})
         games = soup.findAll('div', attrs={'id': re.compile('^game.*?')})
         # setup the list for output.
@@ -311,8 +315,8 @@ class Scores(callbacks.Plugin):
                         url += 'date=%s' % value
         # process url and fetch.
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
+        if not html:
+            irc.error("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
         # process games.
         gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
@@ -376,8 +380,8 @@ class Scores(callbacks.Plugin):
                         url += 'date=%s' % value
         # process url and fetch.
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
+        if not html:
+            irc.error("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
         # process games.
         gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
@@ -441,8 +445,8 @@ class Scores(callbacks.Plugin):
                         url += 'date=%s' % value
         # process url and fetch.
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
+        if not html:
+            irc.error("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
         # process games.
         gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
@@ -485,8 +489,8 @@ class Scores(callbacks.Plugin):
         url = '%s/scoreboard?' % optsport
         # process url and fetch.
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
+        if not html:
+            irc.error("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
 
         if optinput and optinput == "!":
@@ -527,7 +531,11 @@ class Scores(callbacks.Plugin):
         """[--date YYYYMMDD] [tournament|conference|team]
         Display College Basketball scores.
         Optional: Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
-        Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score. Ex: SEC or Bama.
+        Optional: input CONFERENCE or TEAM to search scor            page = utils.web.getUrl(url)
+            return page
+        except utils.web.Error as e:
+            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
+            return Nonees by conference or display an individual team's score. Ex: SEC or Bama.
         Optional: input tournament to display scores. Ex: ncaa, nit.
         """
 
@@ -564,10 +572,9 @@ class Scores(callbacks.Plugin):
                         url += '&date=%s' % value
 
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch NCB scores.")
+        if not html:
+            irc.error("ERROR: Cannot fetch NCB scores.")
             return
-
         # now, process html and put all into gameslist.
         gameslist = self._scores(html, sport='ncb', fullteams=self.registryValue('fullteams', msg.args[0]))
 
@@ -628,8 +635,8 @@ class Scores(callbacks.Plugin):
             url = 'ncf/scoreboard?groupId=%s' % validconfs['top25']
 
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch CFB scores.")
+        if not html:
+            irc.error("ERROR: Cannot fetch CFB scores.")
             return
 
         # now, process html and put all into gameslist.
@@ -704,8 +711,8 @@ class Scores(callbacks.Plugin):
                         url += '&date=%s' % value
 
         html = self._fetch(url)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch women's college basketball scores.")
+        if not html:
+            irc.error("ERROR: Cannot fetch women's college basketball scores.")
             return
 
         # now, process html and put all into gameslist.
@@ -764,15 +771,15 @@ class Scores(callbacks.Plugin):
             matchType = "1"
         # build and fetch url.
         html = self._fetch('general/tennis/dailyresults?matchType=' + matchType)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch Tennis scores.")
+        if not html:
+            irc.error("ERROR: Cannot fetch Tennis scores.")
             return
         # one easy sanity check.
         if "There are no matches scheduled." in html:
             irc.reply("ERROR: There are no {0} tennis matches scheduled.".format(optmatch.title()))
             return
         # process html.
-        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES)
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         matches = soup.findAll('div', attrs={'class':re.compile('^ind|^ind alt')})
         if len(matches) < 1:  # second sanity check.
             irc.reply("ERROR: No {0} tennis matches found.".format(optmatch.title()))
@@ -836,11 +843,11 @@ class Scores(callbacks.Plugin):
             seriesId = "1"
         # build and fetch url.
         html = self._fetch('golf/eventresult?seriesId=' + seriesId)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch Golf scores.")
+        if not html:
+            irc.error("ERROR: Cannot fetch Golf scores.")
             return
         # process html.
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         golfEvent = soup.find('div', attrs={'class': 'sub dark big'})
         golfStatus = soup.find('div', attrs={'class': 'sec row', 'style': 'white-space: nowrap;'})
         # check for Ryder Cup.
@@ -861,7 +868,7 @@ class Scores(callbacks.Plugin):
         for row in rows:
             tds = row.findAll('td')
             pRank = tds[0].getText()
-            pPlayer = tds[1].getText()
+            pPlayer = tds[1].getText().encode('utf-8')
             pScore = tds[2].getText()
             pRound = tds[3].getText()
             pRound = pRound.replace('(', '').replace(')', '')  # remove ( ). We process pRound later.
@@ -918,11 +925,11 @@ class Scores(callbacks.Plugin):
             raceType = "2"
         # build and fetch url.
         html = self._fetch('rpm/nascar/eventresult?seriesId=' + raceType)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch NASCAR stats.")
+        if not html:
+            irc.error("ERROR: Cannot fetch NASCAR standings.")
             return
         # process html.
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
         racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
         # table with results
@@ -933,7 +940,7 @@ class Scores(callbacks.Plugin):
         # one row per driver.
         for row in rows:
             tds = [item.getText().strip() for item in row.findAll('td')]
-            standings.append("{0}. {1} - {2}".format(tds[0], self._bold(tds[1]), tds[2]))
+            standings.append("{0}. {1} - {2}".format(tds[0], self._bold(tds[1].encode('utf-8')), tds[2]))
         # output time.
         irc.reply("{0} :: {1}".format(self._red(race), self._ul(racestatus)))
         irc.reply("{0}".format(" | ".join(standings)))
@@ -942,27 +949,28 @@ class Scores(callbacks.Plugin):
 
     def racing(self, irc, msg, args, optrace):
         """[f1|indycar]
-        Display race results.
+        Display various race results.
         Defaults to F1.
+        Ex: f1 or indycar
         """
 
-        if optrace:  # defaults to F1.
+        if optrace:
             optrace = optrace.lower()
             if optrace == "f1":
                 raceType = "6"
             elif optrace == "indycar":
                 raceType = "1"
-            else:
+            else: # defaults to F1.
                 raceType = "6"
         else:
             raceType = "6"
         # build and fetch url.
         html = self._fetch('rpm/eventresult?season=-1&seriesId=' + raceType)
-        if html == 'None':
-            irc.reply("ERROR: Cannot fetch racing results.")
+        if not html:
+            irc.error("ERROR: Cannot fetch racing results.")
             return
         # process html.
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         race = soup.find('div', attrs={'class': 'sub dark big'}).getText().replace(' Results', '').strip()
         racestatus = soup.find('div', attrs={'class': 'sec row'}).getText().strip()
         # table with rows.
@@ -979,6 +987,70 @@ class Scores(callbacks.Plugin):
         irc.reply("{0}".format(" | ".join(standings)))
 
     racing = wrap(racing, [optional('somethingWithoutSpaces')])
+
+    def d1bb(self, irc, msg, args, optinput):
+        """<team>
+        Display Division I baseball scores.
+        """
+
+        # build and fetch url.
+        try:
+            url = base64.b64decode('aHR0cDovL3d3dy5kMWJhc2ViYWxsLmNvbS9kYWlseS90b2RheS5odG0=')
+            html = utils.web.getUrl(url)
+        except utils.web.Error as e:
+            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
+            irc.error("ERROR. Could not open {0} message: {1}".format(url, e))
+        # sanity check before processing html.
+        if 'No games scheduled today' in html:
+            irc.reply("Sorry, but no games are scheduled today.")
+            return
+        # process html
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
+        tables = soup.findAll('table', attrs={'style':'table-layout:fixed'})[1:]
+        # output list.
+        d1games = []
+        # page is odd but easy way to find games via iteration.
+        for table in tables:  # multiple games in each table.
+            games = table.findAll('table', attrs={'rules':'none', 'frame':'box', 'border':'1'})
+            for game in games:  # iterate over games.
+                # conf = game.findPrevious('h4').getText()
+                away = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[0]
+                awayteam = away.find('a').extract()
+                home = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[1]
+                hometeam = home.find('a').extract()
+                awayscore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[0].getText()
+                homescore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[1].getText()
+                status = game.find('td', attrs={'width':'76'}).getText()
+                # now we slowly build the string to append, conditionally.
+                if away.text == '':  # no ranking.
+                    at = "{0}".format(awayteam.getText())
+                else:  # ranking, ie: #20 LSU
+                    at = "{0} {1}".format(away.getText(), awayteam.getText())
+                if home.text == '':  # no ranking.
+                    ht = "{0}".format(hometeam.getText())
+                else:  # ranking.
+                    ht = "{0} {1}".format(home.getText(), hometeam.getText())
+                # now bold the leader between the two using internal function.
+                gamescore = self._boldleader(at, awayscore, ht, homescore)
+                # add score and format status using mlbhandler above.
+                gamestr = "{0} {1}".format(gamescore, self._handlestatus('mlb', status))
+                d1games.append(gamestr)  # finally, add.
+        # now output.
+        if optinput:  # if we're searching for a team.
+            count = 0  # keep count so we don't flood.
+            for each in d1games:  # iterate through all.
+                if optinput.lower() in each.lower():  # match.
+                    if count < 5:  # max will be 5 out.
+                        count += 1  # bump counter.
+                        irc.reply(each)
+                    else:  # max found so print error and break.
+                        irc.reply("Sorry, too many matches found for '{0}'. Please be more specific.".format(optinput))
+                        break
+        else:  # just display scores in one row.
+            output = " | ".join([item for item in d1games])
+            irc.reply("{0}".format(output))
+
+    d1bb = wrap(d1bb, [optional('text')])
 
 
 Class = Scores
