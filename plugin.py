@@ -814,8 +814,8 @@ class Scores(callbacks.Plugin):
     def tennis(self, irc, msg, args, optmatch, optinput):
         """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
         Display current Tennis scores. Defaults to Men's Singles.
-        Call with argument to display others.
-        Ex: womens
+        Call with argument to display others. Ex: womens.
+        Can also find a specific match via string. Ex: mens nadal or womensdoubles williams.
         """
 
         if optmatch:
@@ -832,22 +832,23 @@ class Scores(callbacks.Plugin):
                 matchType = "6"
             else:  # default to mens.
                 matchType = "1"
+                optinput = optmatch  # if someone inputs tennis federer, this gets set.
         else:
             matchType = "1"
         # build and fetch url.
         html = self._fetch('general/tennis/dailyresults?matchType=' + matchType)
         if not html:
-            irc.error("ERROR: Cannot fetch Tennis scores.")
+            irc.error("ERROR: Cannot fetch Tennis scores. Please wait a minute or two.")
             return
         # one easy sanity check.
         if "There are no matches scheduled." in html:
-            irc.reply("ERROR: There are no {0} tennis matches scheduled.".format(optmatch.title()))
+            irc.reply("ERROR: There are no tennis matches scheduled.")
             return
         # process html.
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         matches = soup.findAll('div', attrs={'class':re.compile('^ind|^ind alt')})
         if len(matches) < 1:  # second sanity check.
-            irc.reply("ERROR: No {0} tennis matches found.".format(optmatch.title()))
+            irc.reply("ERROR: No tennis matches found. No tournament going on?")
             return
         title = soup.find('div', attrs={'class':'sec row'})
         tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]  # there are two here so grab the 2nd (1).
