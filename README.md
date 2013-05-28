@@ -22,7 +22,7 @@ Commands
     ncb [conf] - to fetch college basketball scores (NCAA DIV. I-A (FBS))
     wcb [conf] - to fetch women's college basketball scores (NCAA DIV. I-A (FBS))
     wnba [--date YYMMDD] - to fetch WNBA scores.
-    tennis [mens|womens|mensdoubles|womensdoubles] - to fetch tennis scores.
+    tennis [mens|womens|mensdoubles|womensdoubles|mixeddoubles] - to fetch tennis scores.
     golf [pga|web.com|champions|lpga|euro]- to fetch golf scores
     nascar [nationwide|sprintcup|trucks] - show an active race/stats. (works for nationwide/sprint cup)
     d1bb - fetch Division 1 baseball scores.
@@ -54,4 +54,8 @@ Config Variables
     - /msg <bot> config plugins.Scores.fullteams True/False
 
     This is helpful for searching (ex: !nba New York) but also takes up more room.
+
+TODO:
+
+   - Since I made a ton of structural changes, nfl/ncf have not got to receive these because I cannot test. They need to be ported/adopted.
 
