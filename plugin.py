@@ -96,7 +96,7 @@ class Scores(callbacks.Plugin):
         """Input event string and we return score and playoff information if necessary."""
 
         #scoreregex = re.compile(r'^(?P<score>.*?),(.*?\s(?P<poff>G\d:.*?$)|$|.*?[A-Za-z0-9]+$)')
-        scoreregex = re.compile(r'^(?P<score>.*?)(,|$)(.*?\s(?P<poff>G\d:.*?$)|$|.*?[A-Za-z0-9]+$)')
+        scoreregex = re.compile(r'^(?P<score>.*?)(,|$)(.*?\s(?P<poff>G\d.*?$)|$|.*?[A-Za-z0-9]+$)')
         s = scoreregex.search(event)  # have regex and fallback split method.
         if s:  # if we match.
             eventstr = {'score': s.groupdict()['score'], 'poff': s.groupdict()['poff']}
