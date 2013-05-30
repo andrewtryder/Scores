@@ -92,19 +92,28 @@ class Scores(callbacks.Plugin):
         except ValueError:
             return False
 
-    def _stripcomma(self, string):
-        """Return a string with everything after the first comma removed."""
+    def _splitevent(self, event):
+        """Input event string and we return score and playoff information if necessary."""
 
-        return string.split(',',1)[0]
+        #scoreregex = re.compile(r'^(?P<score>.*?),(.*?\s(?P<poff>G\d:.*?$)|$|.*?[A-Za-z0-9]+$)')
+        scoreregex = re.compile(r'^(?P<score>.*?)(,|$)(.*?\s(?P<poff>G\d:.*?$)|$|.*?[A-Za-z0-9]+$)')
+        s = scoreregex.search(event)  # have regex and fallback split method.
+        if s:  # if we match.
+            eventstr = {'score': s.groupdict()['score'], 'poff': s.groupdict()['poff']}
+        else:  # regex broke. log the "error" so we can fix.
+            self.log.info("NOTICE: {0} did not match regex method.".format(event))
+            eventstr = {'score': event.split(',', 1)[0], 'poff': None}
+        # return our gamestr.
+        return eventstr
 
     def _boldleader(self, atm, asc, htm, hsc):
         """Input away team, away score, home team, home score and bold the leader of the two."""
 
-        if int(asc) > int(hsc):
+        if int(asc) > int(hsc):  # away winning.
             return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
-        elif int(hsc) > int(asc):
+        elif int(hsc) > int(asc):  # home winning.
             return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
-        else:
+        else:  # tied.
             return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
 
     def _colorformatstatus(self, string):
@@ -122,9 +131,9 @@ class Scores(callbacks.Plugin):
                  'PPD':self._yellow('PPD'),'Del:':self._yellow('DLY'),'Int':self._yellow('INT'),
                  'Del':self._yellow('DLY')
                  }
-        try:
+        try:  # try to colorize.
             return table[string]
-        except:
+        except:  # return if error.
             return string
 
     def _mlbformatstatus(self, string):
@@ -187,7 +196,8 @@ class Scores(callbacks.Plugin):
         gameslist = []
         # go through each game
         for game in games:
-            gametext = self._stripcomma(game.getText())  # remove cruft after comma.
+            gamestr = self._splitevent(game.getText())  # convert to text.
+            gametext = gamestr['score']  # returns a dict with score and poff.
             if " at " not in gametext:  # game is in-action.
                 if sport == 'nfl' or sport == 'ncf':  # special for NFL/NCB to display POS.
                     if game.find('b', attrs={'class': 'red'}):
@@ -205,7 +215,10 @@ class Scores(callbacks.Plugin):
                     gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
-                output = "{0} {1}".format(gamescore, self._handlestatus(sport, gparts[4]))
+                if gamestr['poff']:
+                    output = "{0} {1} ({2})".format(gamescore, self._handlestatus(sport, gparts[4]), gamestr['poff'])
+                else:
+                    output = "{0} {1}".format(gamescore, self._handlestatus(sport, gparts[4]))
             else:  # TEAM at TEAM time for inactive games.
                 if not showlater:  # don't show these if !
                     break
@@ -215,11 +228,15 @@ class Scores(callbacks.Plugin):
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 if "AM" not in gparts[3] and "PM" not in gparts[3]:  # for PPD in something not started.
                     gparts[3] = self._colorformatstatus(gparts[3])
-                output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
-
-            gameslist.append(output)  # finally add whatever output is.
-
-        return gameslist  # return the list of games.
+                #output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
+                if gamestr['poff']:
+                    output = "{0} at {1} {2} ({3})".format(gparts[0], gparts[2], gparts[3], gamestr['poff'])
+                else:
+                    output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
+            # finally add whatever output is.
+            gameslist.append(output)
+        # return the list of games.
+        return gameslist
 
     def _datetodatetime(self, optdate):
         """Convert a string like yesterday to datetime object and return YYYYMMDD string."""
