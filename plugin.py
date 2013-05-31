@@ -93,7 +93,7 @@ class Scores(callbacks.Plugin):
             return False
 
     def _splitevent(self, event):
-        """Input event string and we return score and playoff information if necessary."""
+        """Input event string and we return score and playoff information in dict."""
 
         #scoreregex = re.compile(r'^(?P<score>.*?),(.*?\s(?P<poff>G\d:.*?$)|$|.*?[A-Za-z0-9]+$)')
         scoreregex = re.compile(r'^(?P<score>.*?)(,|$)(.*?\s(?P<poff>G\d.*?$)|$|.*?[A-Za-z0-9]+$)')
@@ -145,8 +145,9 @@ class Scores(callbacks.Plugin):
             string = string.replace('Final', 'F')  # Final to F.
             string = string.replace(' ', '')  # Remove spaces (d1bb).
             string = self._red(string)
-        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid'):  # Top/Bot/End/Mid (Game Going on)
+        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid') or string.startswith('Bottom '):  # Top/Bot/End/Mid (Game Going on)
             string = string.replace('Top ', 'T')  # Top to T.
+            string = string.replace('Bottom ', 'B')  # Bottom to B.
             string = string.replace('Bot ', 'B')  # Bot to B.
             string = string.replace('End ', 'E')  # End to E.
             string = string.replace('Mid ', 'M')  # Mid to M.
@@ -1097,14 +1098,16 @@ class Scores(callbacks.Plugin):
             games = table.findAll('table', attrs={'rules':'none', 'frame':'box', 'border':'1'})
             for game in games:  # iterate over games.
                 # conf = game.findPrevious('h4').getText()
-                self.log.info(str(game))
                 away = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[0]
                 if away.find('a'):  # teams will always be in a link.
                     awayteam = away.find('a').extract()
-                else:
+                else:  # skip because we need two teams.
                     continue
                 home = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[1]
-                hometeam = home.find('a').extract()
+                if home.find('a'):  # teams will always be in a link.
+                    hometeam = home.find('a').extract()
+                else:  # skip, as well, if we're missing a hometeam.
+                    continue
                 awayscore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[0].getText()
                 homescore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[1].getText()
                 status = game.find('td', attrs={'width':'76'}).getText()
@@ -1118,7 +1121,7 @@ class Scores(callbacks.Plugin):
                 else:  # ranking.
                     ht = "{0}({1})".format(hometeam.getText().replace('&amp;', '&'), home.getText().replace('#', ''))
                 # if the game has happened or is happening, bold the leader.
-                if "PM" not in status or "AM" not in status:  # game has not started.
+                if "PM" in status or "AM" in status:  # game has not started.
                     gamestr = "{0} vs. {1} {2}".format(at, ht, status)
                 else:  # game has started.
                     gamescore = self._boldleader(at, awayscore, ht, homescore)
