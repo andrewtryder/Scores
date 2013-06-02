@@ -24,5 +24,5 @@ Scores = conf.registerPlugin('Scores')
 conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) in output."""))
 conf.registerChannelValue(Scores, 'fullteams', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
 conf.registerChannelValue(Scores, 'lineByLineScores', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
-
+conf.registerGlobalValue(Scores, 'logURLs', registry.Boolean(False, """Should we log all URL calls?"""))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:

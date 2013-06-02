@@ -10,7 +10,7 @@ import re
 import datetime
 import sqlite3
 import os.path
-import base64
+from base64 import b64decode
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -177,10 +177,10 @@ class Scores(callbacks.Plugin):
     def _fetch(self, optargs, logurl=False):
         """Fetch and return HTML."""
 
-        url = base64.b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
+        url = b64decode('aHR0cDovL20uZXNwbi5nby5jb20v') + '%s&wjb=' % optargs
         try:
-            if logurl:
-                self.log.info(url)
+            if logurl or self.registryValue('logURLs'):
+                self.log.info("Trying to fetch: {0}".format(url))
             page = utils.web.getUrl(url)
             return page
         except utils.web.Error as e:
@@ -1079,11 +1079,12 @@ class Scores(callbacks.Plugin):
 
         # build and fetch url.
         try:
-            url = base64.b64decode('aHR0cDovL3d3dy5kMWJhc2ViYWxsLmNvbS9kYWlseS90b2RheS5odG0=')
+            url = b64decode('aHR0cDovL3d3dy5kMWJhc2ViYWxsLmNvbS9kYWlseS90b2RheS5odG0=')
             html = utils.web.getUrl(url)
         except utils.web.Error as e:
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
-            irc.error("ERROR. Could not open {0} message: {1}".format(url, e))
+            irc.reply("ERROR. Could not open {0} message: {1}".format(url, e))
+            return
         # sanity check before processing html.
         if 'No games scheduled today' in html:
             irc.reply("Sorry, but no games are scheduled today.")
