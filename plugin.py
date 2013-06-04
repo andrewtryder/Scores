@@ -1122,7 +1122,8 @@ class Scores(callbacks.Plugin):
                 else:  # ranking.
                     ht = "{0}({1})".format(hometeam.getText().replace('&amp;', '&'), home.getText().replace('#', ''))
                 # if the game has happened or is happening, bold the leader.
-                if "PM" in status or "AM" in status:  # game has not started.
+                # so far, the only way to test/tell is by looking at status (AM/PM/:/'/')
+                if "PM" in status or "AM" in status or ":" in status:  # game has not started.
                     gamestr = "{0} vs. {1} {2}".format(at, ht, status)
                 else:  # game has started.
                     gamescore = self._boldleader(at, awayscore, ht, homescore)
