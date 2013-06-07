@@ -1098,6 +1098,7 @@ class Scores(callbacks.Plugin):
         for table in tables:  # multiple games in each table.
             games = table.findAll('table', attrs={'rules':'none', 'frame':'box', 'border':'1'})
             for game in games:  # iterate over games.
+                self.log.info(str(game))
                 # conf = game.findPrevious('h4').getText()
                 away = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[0]
                 if away.find('a'):  # teams will always be in a link.
@@ -1109,8 +1110,8 @@ class Scores(callbacks.Plugin):
                     hometeam = home.find('a').extract()
                 else:  # skip, as well, if we're missing a hometeam.
                     continue
-                awayscore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[0].getText()
-                homescore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[1].getText()
+                awayscore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[0].getText().strip()
+                homescore = game.findAll('td', attrs={'align':'center', 'valign':'top'})[1].getText().strip()
                 status = game.find('td', attrs={'width':'76'}).getText()
                 # now we slowly build the string to append, conditionally.
                 if away.text == '':  # no ranking.
@@ -1122,8 +1123,9 @@ class Scores(callbacks.Plugin):
                 else:  # ranking.
                     ht = "{0}({1})".format(hometeam.getText().replace('&amp;', '&'), home.getText().replace('#', ''))
                 # if the game has happened or is happening, bold the leader.
-                # so far, the only way to test/tell is by looking at status (AM/PM/:/'/')
-                if "PM" in status or "AM" in status or ":" in status:  # game has not started.
+                # so far, the only way to test/tell is by looking at status (AM,PM,:,/)
+                # maybe also check if awayscore/homescore isdigit?
+                if "PM" in status or "AM" in status or not awayscore.isdigit() or not homescore.isdigit():  # game has not started.
                     gamestr = "{0} vs. {1} {2}".format(at, ht, status)
                 else:  # game has started.
                     gamescore = self._boldleader(at, awayscore, ht, homescore)
