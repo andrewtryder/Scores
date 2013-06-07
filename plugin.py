@@ -1098,7 +1098,6 @@ class Scores(callbacks.Plugin):
         for table in tables:  # multiple games in each table.
             games = table.findAll('table', attrs={'rules':'none', 'frame':'box', 'border':'1'})
             for game in games:  # iterate over games.
-                self.log.info(str(game))
                 # conf = game.findPrevious('h4').getText()
                 away = game.findAll('td', attrs={'colspan':'2', 'align':'left', 'valign':'top'})[0]
                 if away.find('a'):  # teams will always be in a link.
