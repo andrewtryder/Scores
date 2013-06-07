@@ -1091,7 +1091,7 @@ class Scores(callbacks.Plugin):
             return
         # process html
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
-        tables = soup.findAll('table', attrs={'style':'table-layout:fixed'})[1:]
+        tables = soup.findAll('table', attrs={'style':'table-layout:fixed'}) #[1:]
         # output list.
         d1games = []
         # page is odd but easy way to find games via iteration.
