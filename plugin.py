@@ -1123,27 +1123,28 @@ class Scores(callbacks.Plugin):
                     ht = "{0}({1})".format(hometeam.getText().replace('&amp;', '&'), home.getText().replace('#', ''))
                 # if the game has happened or is happening, bold the leader.
                 # so far, the only way to test/tell is by looking at status (AM,PM,:,/)
-                # maybe also check if awayscore/homescore isdigit?
                 if "PM" in status or "AM" in status or not awayscore.isdigit() or not homescore.isdigit():  # game has not started.
                     gamestr = "{0} vs. {1} {2}".format(at, ht, status)
+                    gamesort = 1  # display these first.
                 else:  # game has started.
                     gamescore = self._boldleader(at, awayscore, ht, homescore)
                     # add score and format status using mlbhandler above.
                     gamestr = "{0} {1}".format(gamescore, self._handlestatus('mlb', status))
-                d1games.append(gamestr)  # finally, add.
+                    gamesort = 2  # display these second.
+                d1games.append({'gamestr':gamestr, 'gamesort':gamesort})  # finally, add.
         # now output.
         if optinput:  # if we're searching for a team.
             count = 0  # keep count so we don't flood.
             for each in d1games:  # iterate through all.
-                if optinput.lower() in each.lower():  # match.
+                if optinput.lower() in each['gamestr'].lower():  # match.
                     if count < 5:  # max will be 5 out.
                         count += 1  # bump counter.
-                        irc.reply(each)
+                        irc.reply(each['gamestr'])
                     else:  # max found so print error and break.
                         irc.reply("Sorry, too many matches found for '{0}'. Please be more specific.".format(optinput))
                         break
-        else:  # just display scores in one row.
-            output = " | ".join([item for item in d1games])
+        else:  # just display scores in one row. listcmp the games into a string.
+            output = " | ".join([item['gamestr'] for item in sorted(d1games, key=lambda k: k['gamesort'], reverse=True)])
             irc.reply("{0}".format(output))
 
     d1bb = wrap(d1bb, [optional('text')])
