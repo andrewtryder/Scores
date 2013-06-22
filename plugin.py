@@ -868,7 +868,9 @@ class Scores(callbacks.Plugin):
         if len(matches) < 1:  # second sanity check.
             irc.reply("ERROR: No tennis matches found. No tournament going on?")
             return
-        title = soup.find('div', attrs={'class':'sec row'})
+        title = soup.find('div', attrs={'class':'sec row'}).getText()
+        if self.registryValue('wilbonton'):  # this has to be set via the config and is a special option.
+            title = title.replace('Wimbledon', 'WILBONTON')  # replace if on.
         tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]  # there are two here so grab the 2nd (1).
         # output container.
         output = []
@@ -887,7 +889,7 @@ class Scores(callbacks.Plugin):
                 output.append("{0} :: {1}".format(status, " ".join(matchText)))
         # now output.
         if not optinput:  # just display scores.
-            irc.reply("{0} {1}".format(self._bold(title.getText()),self._bold(tennisRound.getText())))
+            irc.reply("{0} {1}".format(self._bold(title), self._bold(tennisRound.getText())))
             irc.reply("{0}".format(" | ".join(output)))
         else:  # looking for something specific.
             for each in output:

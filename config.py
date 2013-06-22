@@ -25,4 +25,6 @@ conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do n
 conf.registerChannelValue(Scores, 'fullteams', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
 conf.registerChannelValue(Scores, 'lineByLineScores', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
 conf.registerGlobalValue(Scores, 'logURLs', registry.Boolean(False, """Should we log all URL calls?"""))
+conf.registerGlobalValue(Scores, 'wilbonton', registry.Boolean(False, """DONT TURN THIS ON UNLESS YOU KNOW WHAT IT IS."""))
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
