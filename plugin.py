@@ -870,7 +870,7 @@ class Scores(callbacks.Plugin):
             return
         title = soup.find('div', attrs={'class':'sec row'}).getText()
         if self.registryValue('wilbonton'):  # this has to be set via the config and is a special option.
-            title = title.replace('Wimbledon', 'WILBONTON')  # replace if on.
+            title = title.replace('WIMBLEDON', 'WILBONTON')  # replace if on.
         tennisRound = soup.findAll('div', attrs={'class':'ind sub bold'})[1]  # there are two here so grab the 2nd (1).
         # output container.
         output = []
