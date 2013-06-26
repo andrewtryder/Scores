@@ -892,12 +892,16 @@ class Scores(callbacks.Plugin):
             irc.reply("{0} {1}".format(self._bold(title), self._bold(tennisRound.getText())))
             irc.reply("{0}".format(" | ".join(output)))
         else:  # looking for something specific.
+            count = 0  # for max 5.
             for each in output:
-                count = 0  # for max 5.
                 if optinput.lower() in each.lower():  # if we find a match.
-                    if count < 5:  # only show five.
+                    if count == 0:  # display the title on the first.
+                        irc.reply("{0} {1}".format(self._bold(title), self._bold(tennisRound.getText())))
                         irc.reply(each)
-                        count += 1
+                        count += 1  # i++
+                    elif count < 5:  # only show five.
+                        irc.reply(each)
+                        count += 1  # i++
                     else:  # above this, display the error.
                         irc.reply("I found too many results for '{0}'. Please specify something more specific".format(optinput))
                         break
@@ -982,9 +986,13 @@ class Scores(callbacks.Plugin):
             count = 0  # for max 5.
             for each in append_list:
                 if optinput.lower() in each.lower():  # if we find a match.
+                    if count == 0:  # first one always show row.
+                        irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
+                        irc.reply(each)
+                        count += 1  # ++1
                     if count < 5:  # only show five.
                         irc.reply(each)
-                        count += 1
+                        count += 1  # ++1
                     else:  # above this, display the error.
                         irc.reply("I found too many results for '{0}'. Please specify something more specific".format(optinput))
                         break
