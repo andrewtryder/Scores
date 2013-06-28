@@ -1179,9 +1179,9 @@ class Scores(callbacks.Plugin):
         for div in divs:
             status = div.find('span', attrs={'class':'gameSummaryText'}).getText().strip()
             awayt = div.find('tr', attrs={'class':'league_row away '}).getText(separator=' ')
-            awayt = utils.str.normalizeWhitespace(awayt)
+            awayt = utils.str.normalizeWhitespace(awayt.strip())
             homet = div.find('tr', attrs={'class':'league_row home '}).getText(separator=' ')
-            homet = utils.str.normalizeWhitespace(homet)
+            homet = utils.str.normalizeWhitespace(homet.strip())
             irc.reply("{0} @ {1} {2}".format(awayt, homet, status))
 
     cfl = wrap(cfl)
