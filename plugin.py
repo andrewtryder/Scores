@@ -1177,12 +1177,20 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         divs = soup.findAll('div', attrs={'id':re.compile('^\d+_score.*?')})
         for div in divs:
+            # handle status
             status = div.find('div', attrs={'class':'gameSummary'}).getText().strip()
-            awayt = div.find('tr', attrs={'class':re.compile('league_row away.*?')}).getText(separator=' ')
-            awayt = utils.str.normalizeWhitespace(awayt.strip())
-            homet = div.find('tr', attrs={'class':re.compile('league_row home.*?')}).getText(separator=' ')
-            homet = utils.str.normalizeWhitespace(homet.strip())
-            irc.reply("{0} @ {1} {2}".format(awayt, homet, status))
+            # away stuff
+            away = div.find('tr', attrs={'class':re.compile('league_row away.*?')})
+            at = away.find('td', attrs={'class':'league_team'}).getText().strip()
+            awayscore = away.find('td', attrs={'class':'league_score'}).getText().strip()
+            # home stuff
+            home = div.find('tr', attrs={'class':re.compile('league_row home.*?')})
+            ht = home.find('td', attrs={'class':'league_team'}).getText().strip()
+            homescore = home.find('td', attrs={'class':'league_score'}).getText().strip()
+            # bold leader.
+            gamescore = self._boldleader(at, awayscore, ht, homescore)
+            # output.
+            irc.reply("{0} {1}".format(gamescore, status))
 
     cfl = wrap(cfl)
 
