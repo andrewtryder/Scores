@@ -181,7 +181,9 @@ class Scores(callbacks.Plugin):
         try:
             if logurl or self.registryValue('logURLs'):
                 self.log.info("Trying to fetch: {0}".format(url))
-            page = utils.web.getUrl(url)
+
+            headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
+            page = utils.web.getUrl(url, headers=headers)
             return page
         except utils.web.Error as e:
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
@@ -1159,6 +1161,29 @@ class Scores(callbacks.Plugin):
 
     d1bb = wrap(d1bb, [optional('text')])
 
+    def cfl(self, irc, msg, args):
+        """
+        Display CFL scores.
+        """
+
+        try:
+            url = b64decode('aHR0cDovL20udHNuLmNhL2NmbA==')
+            html = utils.web.getUrl(url)
+        except utils.web.Error as e:
+            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
+            irc.reply("ERROR. Could not open {0} message: {1}".format(url, e))
+            return
+        # process html.
+        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
+        divs = soup.findAll('div', attrs={'id':re.compile('^\d+_score.*?')})
+        for div in divs:
+            status = div.find('span', attrs={'class':'gameSummaryText'}).getText().strip()
+            awayt = div.find('tr', attrs={'class':'league_row away '}).getText(separator=' ')
+            homet = div.find('tr', attrs={'class':'league_row home '}).getText(separator=' ')
+            irc.reply("{0} @ {1} {2}".format(utils.str.normalizeWhitespace(awayt),\
+                                             utils.str.normalizeWhitespace(homet), status))
+
+    cfl = wrap(cfl)
 
 Class = Scores
 
