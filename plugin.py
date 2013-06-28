@@ -1177,10 +1177,10 @@ class Scores(callbacks.Plugin):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
         divs = soup.findAll('div', attrs={'id':re.compile('^\d+_score.*?')})
         for div in divs:
-            status = div.find('span', attrs={'class':'gameSummaryText'}).getText().strip()
-            awayt = div.find('tr', attrs={'class':'league_row away '}).getText(separator=' ')
+            status = div.find('div', attrs={'class':'gameSummary'}).getText().strip()
+            awayt = div.find('tr', attrs={'class':re.compile('league_row away.*?')}).getText(separator=' ')
             awayt = utils.str.normalizeWhitespace(awayt.strip())
-            homet = div.find('tr', attrs={'class':'league_row home '}).getText(separator=' ')
+            homet = div.find('tr', attrs={'class':re.compile('league_row home.*?')}).getText(separator=' ')
             homet = utils.str.normalizeWhitespace(homet.strip())
             irc.reply("{0} @ {1} {2}".format(awayt, homet, status))
 
