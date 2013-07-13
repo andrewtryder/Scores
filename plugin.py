@@ -1188,7 +1188,10 @@ class Scores(callbacks.Plugin):
             ht = home.find('td', attrs={'class':'league_team'}).getText().strip()
             homescore = home.find('td', attrs={'class':'league_score'}).getText().strip()
             # bold leader.
-            gamescore = self._boldleader(at, awayscore, ht, homescore)
+            if (awayscore.isdigit() and homescore.isdigit()):  # make sure they're digits.
+                gamescore = self._boldleader(at, awayscore, ht, homescore)
+            else:  # if not (in the future).
+                gamescore = "{0} {1} {2} {3}".format(at, awayscore, ht, homescore)
             # output.
             irc.reply("{0} {1}".format(gamescore, status))
 
