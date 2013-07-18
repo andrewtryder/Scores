@@ -980,7 +980,7 @@ class Scores(callbacks.Plugin):
             # append now.
             append_list.append(appendString)
         # output time.
-        if golfEvent != None and golfStatus != None:  # header/tournament
+        if golfEvent and golfStatus:  # header/tournament
             irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
         if not optinput:  # just show the leaderboard
             irc.reply(" | ".join([item for item in append_list]))
@@ -988,10 +988,6 @@ class Scores(callbacks.Plugin):
             count = 0  # for max 5.
             for each in append_list:
                 if optinput.lower() in each.lower():  # if we find a match.
-                    if count == 0:  # first one always show row.
-                        irc.reply("{0} - {1}".format(self._green(golfEvent.getText()), self._bold(golfStatus.getText())))
-                        irc.reply(each)
-                        count += 1  # ++1
                     if count < 5:  # only show five.
                         irc.reply(each)
                         count += 1  # ++1
