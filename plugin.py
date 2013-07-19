@@ -213,7 +213,7 @@ class Scores(callbacks.Plugin):
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
                 # last exception: color <RZ> or * if we have them.
-                if sport == 'nfl' or sport == 'ncb':  # cheap but works.
+                if sport == 'nfl' or sport == 'ncf':  # cheap but works.
                     gparts[0] = gparts[0].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                     gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
@@ -266,6 +266,31 @@ class Scores(callbacks.Plugin):
         # now return.
         return datestr
 
+    def _footballweek(self, optweek=None, optsport=None):
+        """Handler for doing "weeks" when looking for football (cfb/nfl) scores."""
+
+        # our base for both comes from September 1st of each year.
+        base = datetime.date(datetime.datetime.now().year, 9, 1)
+        # if it falls outside a sunday, adjust. it's odd but worked.
+        if base.weekday() != 6:
+            base = base+datetime.timedelta(days=-(base.weekday()-6))
+
+        # if 7th day of month, we go back 3.
+        if base.day == 7:
+            kickoff = base-datetime.timedelta(days=3)
+        else:  # otherwise, go forward 4 days.
+            kickoff = base+datetime.timedelta(days=4)
+        # next, if college, they're always a week "behind".
+        if optsport == "ncf":
+            kickoff = kickoff-datetime.timedelta(weeks=1)
+        # now, we adjust for week. optweek = 2 means + 1 week from base.
+        if optweek != 1:  # 1 means use base. otherwise, calc.
+            kickoff = kickoff+datetime.timedelta(weeks=(optweek-1))
+        # finally, we convert this to YYYYmmDD.
+        kickoff = kickoff.strftime('%Y%m%d')
+        # return it.
+        return kickoff
+
     ######################
     # DATABASE FUNCTIONS #
     ######################
@@ -304,6 +329,7 @@ class Scores(callbacks.Plugin):
 
     def nba(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
+
         Display NBA scores.
         Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
         Specify a string to match after to only display specific scores. Ex: Knick
@@ -369,6 +395,7 @@ class Scores(callbacks.Plugin):
 
     def wnba(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
+
         Display WNBA scores.
         Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
         Specify a string to match after to only display specific scores. Ex: Minnesota
@@ -434,6 +461,7 @@ class Scores(callbacks.Plugin):
 
     def nhl(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
+
         Display NHL scores.
         Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
         Specify a string to match after to only display specific scores. Ex: Rang
@@ -499,6 +527,7 @@ class Scores(callbacks.Plugin):
 
     def mlb(self, irc, msg, args, optlist, optinput):
         """[--date YYYYMMDD] [optional]
+
         Display MLB scores.
         Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
         Specify a string to match after to only display specific scores. Ex: Yank
@@ -563,64 +592,157 @@ class Scores(callbacks.Plugin):
     mlb = wrap(mlb, [getopts({'date': ('int')}), optional('text')])
 
     def nfl(self, irc, msg, args, optinput):
-        """[team]
+        """[week#|team]
+
         Display NFL scores.
-        Specify a string to match after to only display specific scores. Ex: Pat
+        Specify a string to match for current week or issue a week number (1-17) for scores.
+        Ex: pat (would match patriots scores) or 1
         """
 
-         # first, declare sport.
+        # declare sport.
         optsport = 'nfl'
-        # base url.
-        url = '%s/scoreboard?' % optsport
+        # set some defaults first that we can manip later.
+        showlater, url = True, None
+
+        # before we do anything, check for a week.
+        if optinput:
+            if optinput.isdigit():  # if it is a digit
+                if not 1 <= int(optinput) <= 17:  # week must be 1-17.
+                    irc.reply("ERROR: '{0}' is an invalid week. It must be between 1-17.".format(optinput))
+                    return
+                # we have a validweek. lets grab the actual date.
+                optweek = self._footballweek(optweek=int(optinput), optsport="nfl")
+                # now create the url w/date via optweek.
+                url = '%s/scoreboard?date=%s' % (optsport, str(optweek))
+                optinput = None
+            elif optinput == "!":  # special "!" trigger.
+                showlater = False
+                optinput = None
+
+        # to simplify things above, we have one catchall for url:
+        if not url:
+            url = '%s/scoreboard?' % optsport
         # process url and fetch.
         html = self._fetch(url)
         if not html:
             irc.error("ERROR: Cannot fetch {0} scores url. Try again in a minute.".format(optsport.upper()))
             return
 
-        if optinput and optinput == "!":
-            showlater = False
-            optinput = None
-        else:
-            showlater = True
+        # grab the list of games.
+        gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+        # strip colors?
+        if self.registryValue('disableANSI', msg.args[0]):
+            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
+        # now we output.
+        if len(gameslist) > 0:  # we have games.
+            if optinput:  # we're looking for a specific team/string.
+                count = 0  # count to make sure we don't output too much.
+                for item in gameslist:  # iterate over each.
+                    if optinput.lower() in item.lower():  # look for matches.
+                        if count < 10:  # less than 10, output.
+                            irc.reply(item)
+                            count += 1
+                        else:  # too many matches.
+                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
+                            break
+            else:  # output line-by-line.
+                if self.registryValue('lineByLineScores', msg.args[0]):
+                    for game in gameslist:
+                        irc.reply(game)
+                else:  # when we do general output, max each per line.
+                    for splice in self._splicegen('380', gameslist):
+                        irc.reply(" | ".join([gameslist[item] for item in splice]))
+        else:  # we don't have any games.
+            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
 
-        gameslist = self._scores(html, sport='nfl', fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+    nfl = wrap(nfl, [optional('text')])
 
+    def cfb(self, irc, msg, args, optinput):
+        """[conference|team|week #]
+
+        Display College Football scores.
+        Optional: input with conference to display all scores from conf. Use team to only display specific team scores.
+        Ex: SEC or Bama or BIG10 or Notre or 1
+        """
+
+        # before anything, define optsport
+        optsport = 'ncf'
+
+        # football confs. translates text to groupid for lookup.
+        validconfs = {'top25':'999', 'acc':'1', 'aa':'151', 'big12':'4', 'bigsky':'20', 'bigsouth':'40',
+                      'big10':'5', 'cusa':'12', 'caa':'48', 'independent':'32', 'greatwest':'43',
+                      'ivy':'22', 'mac':'15', 'meac':'24', 'mvc':'21', 'mwc':'17', 'i-a':'80', 'i-aa':'81',
+                      'nec':'25', 'ovc':'26', 'pac12':'9', 'patriot':'27', 'pioneer':'28', 'sec':'8',
+                      'southern':'29', 'southland':'30', 'sunbelt':'37', 'swac':'31' }
+
+        # default vars.
+        showlater = True
+        # handle the tricky input here. we either take a week
+        if optinput:
+            optinput = optinput.lower()  # mainly to match confs.
+            if optinput.isdigit():  # if it is a digit
+                if not 1 <= int(optinput) <= 15:  # week must be 1-17.
+                    irc.reply("ERROR: '{0}' is an invalid week. It must be between 1-15.".format(optinput))
+                    return
+                # we have a validweek. lets grab the actual date.
+                optweek = self._footballweek(optweek=int(optinput), optsport=optsport)
+                # now create the url w/date via optweek.
+                url = '%s/scoreboard?date=%s' % (optsport, str(optweek))
+                optinput = None
+            elif optinput == "!":  # special "!" trigger.
+                showlater = False
+                optinput = None
+            elif optinput in validconfs:  # we found a validconf.
+                url = 'ncf/scoreboard?groupId=%s' % validconfs[optinput]
+                optinput = None
+            else:  # no number (week), no conf, so we're searching for a string in all I-A.
+                url = 'ncf/scoreboard?groupId=%s' % validconfs['i-a']
+        else:  # no optinput so just show top25 scores.
+            url = 'ncf/scoreboard?groupId=%s' % validconfs['top25']
+
+        # finally, fetch scores via http.
+        html = self._fetch(url)
+        if not html:
+            irc.error("ERROR: Cannot fetch NCAAF scores url. Try again in a minute.")
+            return
+
+        # now, process html and put all into gameslist.
+        gameslist = self._scores(html, sport=optsport, fullteams=self.registryValue('fullteams', msg.args[0]), showlater=showlater)
+
+        # strip ANSI if needed.
         if self.registryValue('disableANSI', msg.args[0]):
             gameslist = [ircutils.stripFormatting(item) for item in gameslist]
 
-        if len(gameslist) > 0:
-            if optinput:
+        # finally, check if there is any games/output.
+        if len(gameslist) > 0: # if we have games
+            if optinput: # if we have input.
                 count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
+                for item in gameslist:  # check if anything matches.
+                    if optinput in item.lower():  # input is lowered from above. match.
                         if count < 10:
                             irc.reply(item)
                             count += 1
                         else:
                             irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
                             break
-            else:
+            else:  # special case.
                 if self.registryValue('lineByLineScores', msg.args[0]):
                     for game in gameslist:
                         irc.reply(game)
-                else:
+                else:  # fit all we can per line.
                     for splice in self._splicegen('380', gameslist):
                         irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:
-            irc.reply("ERROR: No {0} games listed.".format(optsport.upper()))
+        else:  # no games
+            irc.reply("ERROR: No college football games listed.")
 
-    nfl = wrap(nfl, [optional('text')])
+    cfb = wrap(cfb, [optional('text')])
 
     def ncb(self, irc, msg, args, optlist, optconf):
-        """[--date YYYYMMDD] [tournament|conference|team]
+        """[--date YYYYMMDD] [tournament|conference|team
+
         Display College Basketball scores.
         Optional: Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
-        Optional: input CONFERENCE or TEAM to search scor            page = utils.web.getUrl(url)
-            return page
-        except utils.web.Error as e:
-            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
-            return Nonees by conference or display an individual team's score. Ex: SEC or Bama.
+        Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score. Ex: SEC or Bama.
         Optional: input tournament to display scores. Ex: ncaa, nit.
         """
 
@@ -691,72 +813,9 @@ class Scores(callbacks.Plugin):
 
     ncb = wrap(ncb, [getopts({'date': ('int')}), optional('text')])
 
-    def cfb(self, irc, msg, args, optconf):
-        """[conference|team]
-        Display College Football scores.
-        Optional: input with conference to display all scores from conf. Use team to only display specific team scores.
-        Ex: SEC or Bama or BIG10 or Notre
-        """
-
-        # football confs.
-        validconfs = {'top25':'999', 'acc':'1', 'bigeast':'10', 'bigsouth':'40', 'big10':'5', 'big12':'4',
-                      'bigsky':'20', 'caa':'48', 'c-usa':'12', 'independent':'18','ivy':'22', 'mac':'15',
-                      'meac':'24', 'mvc':'21', 'i-a':'80','i-aa':'81', 'pac12':'9', 'southern':'29', 'sec':'8',
-                      'sunbelt':'37', 'wac':'16'}
-
-        # if we have a specific conf to display, get the id.
-        optinput = None
-        if optconf:
-            optconf = optconf.lower()
-            if optconf not in validconfs:
-                optinput = optconf
-
-        # get top25 if no conf is specified.
-        if optconf and optinput :  # no optinput because we got a conf above.
-            url = 'ncf/scoreboard?groupId=%s' % validconfs['i-a']
-        elif optconf and not optinput:
-            url = 'ncf/scoreboard?groupId=%s' % validconfs[optconf]
-        else:
-            url = 'ncf/scoreboard?groupId=%s' % validconfs['top25']
-
-        html = self._fetch(url)
-        if not html:
-            irc.error("ERROR: Cannot fetch CFB scores.")
-            return
-
-        # now, process html and put all into gameslist.
-        gameslist = self._scores(html, sport='ncf', fullteams=self.registryValue('fullteams', msg.args[0]))
-
-        # strip ANSI if needed.
-        if self.registryValue('disableANSI', msg.args[0]):
-            gameslist = [ircutils.stripFormatting(item) for item in gameslist]
-
-        # finally, check if there is any games/output.
-        if len(gameslist) > 0: # if we have games
-            if optinput: # if we have input.
-                count = 0
-                for item in gameslist:
-                    if optinput.lower() in item.lower():
-                        if count < 10:
-                            irc.reply(item)
-                            count += 1
-                        else:
-                            irc.reply("I found too many matches for '{0}'. Try something more specific.".format(optinput))
-                            break
-            else:
-                if self.registryValue('lineByLineScores', msg.args[0]):
-                    for game in gameslist:
-                        irc.reply(game)
-                else:
-                    for splice in self._splicegen('380', gameslist):
-                        irc.reply(" | ".join([gameslist[item] for item in splice]))
-        else:  # no games
-            irc.reply("ERROR: No college football games listed.")
-
-    cfb = wrap(cfb, [optional('text')])
-
     def ncw(self, irc, msg, args, optlist, optconf):
         """[--date YYYYMMDD] [conference|team]
+
         Display Women's College Basketball scores.
         Optional: Use --date YYYYMMDD to display scores on specific date. Ex: --date 20121225
         Optional: input CONFERENCE or TEAM to search scores by conference or display an individual team's score. Ex: SEC or Bama.
@@ -833,6 +892,7 @@ class Scores(callbacks.Plugin):
 
     def tennis(self, irc, msg, args, optmatch, optinput):
         """[mens|womens|mensdoubles|womensdoubles|mixeddoubles]
+
         Display current Tennis scores. Defaults to Men's Singles.
         Call with argument to display others. Ex: womens.
         Can also find a specific match via string. Ex: mens nadal or womensdoubles williams.
@@ -912,6 +972,7 @@ class Scores(callbacks.Plugin):
 
     def golf(self, irc, msg, args, optseries, optinput):
         """[pga|web.com|champions|lpga|euro]
+
         Display current Golf scores from a tournament. Specify a specific series to show different scores.
         Ex: lpga
         """
@@ -999,6 +1060,7 @@ class Scores(callbacks.Plugin):
 
     def nascar(self, irc, msg, args, optrace):
         """[sprintcup|nationwide|trucks]
+
         Display active NASCAR results from most current race.
         Defaults to Sprint Cup. Specify 'nationwide' or 'trucks' for other series.
         """
@@ -1041,6 +1103,7 @@ class Scores(callbacks.Plugin):
 
     def racing(self, irc, msg, args, optrace):
         """[f1|indycar]
+
         Display various race results.
         Defaults to F1.
         Ex: f1 or indycar
@@ -1081,7 +1144,8 @@ class Scores(callbacks.Plugin):
     racing = wrap(racing, [optional('somethingWithoutSpaces')])
 
     def d1bb(self, irc, msg, args, optinput):
-        """<team>
+        """[team]
+
         Display Division I baseball scores.
         """
 
