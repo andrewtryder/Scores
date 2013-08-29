@@ -690,6 +690,7 @@ class Scores(callbacks.Plugin):
                 url = '%s/scoreboard?date=%s' % (optsport, str(optweek))
                 optinput = None
             elif optinput == "!":  # special "!" trigger.
+                url = 'ncf/scoreboard?groupId=%s' % validconfs['i-a']
                 showlater = False
                 optinput = None
             elif optinput in validconfs:  # we found a validconf.
