@@ -322,6 +322,7 @@ INSERT INTO teams (sport,full,short) VALUES ('ncf','Southeastern Louisiana Lions
 INSERT INTO teams (sport,full,short) VALUES ('ncf','Jacksonville State Gamecocks','JVST');
 INSERT INTO teams (sport,full,short) VALUES ('ncf','Nicholls State Colonels','NICH');
 INSERT INTO teams (sport,full,short) VALUES ('ncf','Western Kentucky Hilltoppers','WKU');
+INSERT INTO teams (sport,full,short) VALUES ('ncf','Colgate Raiders','COLG');
 /* NCB */
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Southern Illinois Salukis','SIU');
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Cleveland State Vikings','CLEV');
