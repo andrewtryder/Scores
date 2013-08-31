@@ -209,6 +209,9 @@ class Scores(callbacks.Plugin):
                         gametext = gametext.replace('*', '<>')
                 # make sure we split into parts and shove whatever status/time is in the rest.
                 gparts = gametext.split(" ", 4)
+                # replace &
+                gparts[0] = gparts[0].replace('&amp;', '&')
+                gparts[2] = gparts[2].replace('&amp;', '&')
                 if fullteams:  # gparts[0] = away/2=home. full translation table.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
