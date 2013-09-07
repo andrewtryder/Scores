@@ -329,8 +329,8 @@ INSERT INTO teams (sport,full,short) VALUES ('ncf','South Dakota Coyotes','SDAK'
 INSERT INTO teams (sport,full,short) VALUES ('ncf',"Gardner-Webb Runnin' Bulldogs",'WEBB');
 INSERT INTO teams (sport,full,short) VALUES ('ncf','Prairie View A&M Panthers','PV');
 INSERT INTO teams (sport,full,short) VALUES ('ncf','James Madison Dukes','JMU');
-INSERT INTO teams (sport,full,short) VALUES ('ncb','Old Dominion Monarchs','OD');
-
+INSERT INTO teams (sport,full,short) VALUES ('ncf','Old Dominion Monarchs','OD');
+INSERT INTO teams (sport,full,short) VALUES ('ncf','Alcorn State Braves','ALCN');
 
 /* NCB */
 INSERT INTO teams (sport,full,short) VALUES ('ncb','Southern Illinois Salukis','SIU');
