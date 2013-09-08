@@ -308,11 +308,12 @@ class Scores(callbacks.Plugin):
         # connect and do the db translation.
         conn = sqlite3.connect(self.scoresdb)
         cursor = conn.cursor()
-        cursor.execute("select full from teams where short=? and sport=?", (optteam, optsport))
+        cursor.execute("SELECT full FROM teams WHERE short=? AND sport=?", (optteam, optsport))
         row = cursor.fetchone()
         cursor.close()
         # put the string/team back together with or without db output.
         if row is None:
+            self.log.info("_transteam :: We don't have a full team name for {0} in {1}".format(optteam, optsport))
             team = optteam
         else:
             team = str(row[0])
@@ -672,7 +673,7 @@ class Scores(callbacks.Plugin):
         optsport = 'ncf'
 
         # football confs. translates text to groupid for lookup.
-        validconfs = {'top25':'999', 'acc':'1', 'aa':'151', 'big12':'4', 'bigsky':'20', 'bigsouth':'40',
+        validconfs = {'top25':'999', 'acc':'1', 'aac':'151', 'big12':'4', 'bigsky':'20', 'bigsouth':'40',
                       'big10':'5', 'cusa':'12', 'caa':'48', 'independent':'32', 'greatwest':'43',
                       'ivy':'22', 'mac':'15', 'meac':'24', 'mvc':'21', 'mwc':'17', 'i-a':'80', 'i-aa':'81',
                       'nec':'25', 'ovc':'26', 'pac12':'9', 'patriot':'27', 'pioneer':'28', 'sec':'8',
