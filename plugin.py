@@ -167,10 +167,14 @@ class Scores(callbacks.Plugin):
         if sport == 'mlb':  # handle mlb here.
             string = self._mlbformatstatus(string)
             return string
-        if sport != 'mlb':  # everything else.
+        else:  # everything else.
             strings = string.split(' ', 1)  # split at space, everything in a list w/two.
             if len(strings) == 2:  # if we have two items, like 3:00 4th.
-                return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1]))  # ignore time and colorize quarter/etc.
+                # this is a special case for NFL/CFB where they do [u'Del:', u'10:30 1st']
+                if strings[0] == "Del:":  # special case for Delay.
+                    return "{0} ({1})".format(self._yellow("DLY"), strings[1])
+                else:  # basically, everything else.
+                    return "{0} {1}".format(strings[0], self._colorformatstatus(strings[1]))  # ignore time and colorize quarter/etc.
             else:  # game is "not in progress"
                 return self._colorformatstatus(strings[0])  # just return the colorized quarter/etc due to no time.
 
