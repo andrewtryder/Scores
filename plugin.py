@@ -145,7 +145,8 @@ class Scores(callbacks.Plugin):
             string = string.replace('Final', 'F')  # Final to F.
             string = string.replace(' ', '')  # Remove spaces (d1bb).
             string = self._red(string)
-        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid') or string.startswith('Bottom '):  # Top/Bot/End/Mid (Game Going on)
+        # Top/Bot/End/Mid (Game Going on)
+        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid') or string.startswith('Bottom '):
             string = string.replace('Top ', 'T')  # Top to T.
             string = string.replace('Bottom ', 'B')  # Bottom to B.
             string = string.replace('Bot ', 'B')  # Bot to B.
@@ -153,6 +154,7 @@ class Scores(callbacks.Plugin):
             string = string.replace('Mid ', 'M')  # Mid to M.
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
+        # Delayed/PPD/Susp s tuff.
         elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del') or string.startswith('Susp'):  # delayed
             if string == "PPD":  # PPD is one thing, otherwise..
                 string = self._yellow('PPD')
@@ -197,7 +199,6 @@ class Scores(callbacks.Plugin):
         """Go through each "game" we receive and process the data."""
 
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES, fromEncoding='utf-8')
-        # subdark = soup.find('div', attrs={'class': 'sub dark'})
         games = soup.findAll('div', attrs={'id': re.compile('^game.*?')})
         # setup the list for output.
         gameslist = []
@@ -213,7 +214,7 @@ class Scores(callbacks.Plugin):
                         gametext = gametext.replace('*', '<>')
                 # make sure we split into parts and shove whatever status/time is in the rest.
                 gparts = gametext.split(" ", 4)
-                # replace &
+                # replace & in team's.
                 gparts[0] = gparts[0].replace('&amp;', '&')
                 gparts[2] = gparts[2].replace('&amp;', '&')
                 if fullteams:  # gparts[0] = away/2=home. full translation table.
@@ -225,23 +226,29 @@ class Scores(callbacks.Plugin):
                     gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
+                # prepare to output. if we are in a "playoffs" situation (NHL/NBA/MLB)
                 if gamestr['poff']:
                     output = "{0} {1} ({2})".format(gamescore, self._handlestatus(sport, gparts[4]), gamestr['poff'])
-                else:
+                else:  # regular, non-playoffs, like all other sports.
                     output = "{0} {1}".format(gamescore, self._handlestatus(sport, gparts[4]))
             else:  # TEAM at TEAM time for inactive games.
                 if not showlater:  # don't show these if !
                     break
                 gparts = gametext.split(" ", 3)  # remove AM/PM in split.
+                # replace & in team's.
+                gparts[0] = gparts[0].replace('&amp;', '&')
+                gparts[2] = gparts[2].replace('&amp;', '&')
+                # should we do full team names?
                 if fullteams:  # full teams.
                     gparts[0] = self._transteam(gparts[0], optsport=sport)
                     gparts[2] = self._transteam(gparts[2], optsport=sport)
-                if "AM" not in gparts[3] and "PM" not in gparts[3]:  # for PPD in something not started.
+                # for PPD in something not started.
+                if "AM" not in gparts[3] and "PM" not in gparts[3]:
                     gparts[3] = self._colorformatstatus(gparts[3])
-                #output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
+                # now prepare to output. if we're in playoffs situation (NHL/NBA/MLB)
                 if gamestr['poff']:
                     output = "{0} at {1} {2} ({3})".format(gparts[0], gparts[2], gparts[3], gamestr['poff'])
-                else:
+                else: # regular, non-playoffs, like all other sports.
                     output = "{0} at {1} {2}".format(gparts[0], gparts[2], gparts[3])
             # finally add whatever output is.
             gameslist.append(output)
@@ -310,22 +317,24 @@ class Scores(callbacks.Plugin):
         if m.group('team'):
             optteam = m.group('team')
         # connect and do the db translation.
-        conn = sqlite3.connect(self.scoresdb)
-        cursor = conn.cursor()
-        cursor.execute("SELECT full FROM teams WHERE short=? AND sport=?", (optteam, optsport))
-        row = cursor.fetchone()
-        cursor.close()
-        # put the string/team back together with or without db output.
-        if row is None:
+        with sqlite3.connect(self.scoresdb) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT full FROM teams WHERE short=? AND sport=?", (optteam, optsport))
+            row = cursor.fetchone()
+        # now lets check what we got back, if we got a team back.
+        if not row:  # don't have the team. log.
             self.log.info("_transteam :: We don't have a full team name for {0} in {1}".format(optteam, optsport))
             team = optteam
-        else:
+        else:  # otherwise, we got the team, so we replace it.
             team = str(row[0])
         # now lets build for output.
         output = ""  # blank string to start.
-        if m.group('pre'):   # readd * or <RZ>
+        # prepend the * or <RZ> if present.
+        if m.group('pre'):
             output += m.group('pre')
-        output += team  # now team.
+        # we add the team regardless.
+        output += team
+        # last, for NCF/NCB - rankings at the end.
         if m.group('rank'):
             output += m.group('rank')
         # finally, return output.
