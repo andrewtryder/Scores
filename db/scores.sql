@@ -209,7 +209,7 @@ INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Washington Huskies', 'WAS
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Washington State Cougars', 'WSU');
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Toledo Rockets', 'TOL');
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'California Golden Bears', 'CAL');
-INSERT INTO teams (sport, full, short) VALUES ('ncf', 'South Carolina Gamecocks', 'SC');
+INSERT INTO teams (sport, full, short) VALUES ('ncf', 'South Carolina Gamecocks', 'SCAR');
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Southeast Missouri State Redhawks', 'SEMO');
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Marshall Thundering Herd', 'MRSH');
 INSERT INTO teams (sport, full, short) VALUES ('ncf', 'Savannah State Tigers', 'SAV');
