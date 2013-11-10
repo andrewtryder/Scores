@@ -45,7 +45,7 @@ INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Phoenix Mercury', 'PHO')
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Washington Mystics', 'WAS');
 /* NFL */
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Atlanta Falcons', 'ATL');
-INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Detriot Lions', 'DET');
+INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Detroit Lions', 'DET');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'New Orleans Saints', 'NO');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Dallas Cowboys', 'DAL');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Tennessee Titans', 'TEN');
@@ -807,4 +807,3 @@ INSERT INTO teams (sport, full, short) VALUES ('ncb', 'Southeastern Louisiana Li
 INSERT INTO teams (sport, full, short) VALUES ('ncb', 'Northern Kentucky Norse', 'NKU');
 INSERT INTO teams (sport, full, short) VALUES ('ncb', 'Texas-Pan American Broncs', 'UTPA');
 INSERT INTO teams (sport, full, short) VALUES ('ncb', 'Bradley Braves', 'BRAD');
-
