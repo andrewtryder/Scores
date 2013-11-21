@@ -65,7 +65,7 @@ INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Tampa Bay Buccaneers', 'T
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Oakland Raiders', 'OAK');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Carolina Panthers', 'CAR');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'New England Patriots', 'NE');
-INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Jacksonville Jaguars', 'JAC');
+INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Jacksonville Jaguars', 'JAX');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Minnesota Vikings', 'MIN');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Houston Texans', 'HOU');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Cleveland Browns', 'CLE');
