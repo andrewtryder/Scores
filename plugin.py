@@ -235,6 +235,7 @@ class Scores(callbacks.Plugin):
                 if not showlater:  # don't show these if !
                     break
                 gparts = gametext.split(" ", 3)  # remove AM/PM in split.
+                #self.log.info("{0}".format(gparts))
                 # replace & in team's.
                 gparts[0] = gparts[0].replace('&amp;', '&')
                 gparts[2] = gparts[2].replace('&amp;', '&')
@@ -245,6 +246,9 @@ class Scores(callbacks.Plugin):
                 # for PPD in something not started.
                 if "AM" not in gparts[3] and "PM" not in gparts[3]:
                     gparts[3] = self._colorformatstatus(gparts[3])
+                else:  # lets clean up what's left here.
+                    gparts[3] = gparts[3].split(',')[0]  # remove if we have a , split and use [0]
+                    gparts[3] = gparts[3].replace('PM', '').replace('AM', '').strip()  # remove AM+PM+tailing space.
                 # now prepare to output. if we're in playoffs situation (NHL/NBA/MLB)
                 if gamestr['poff']:
                     output = "{0} at {1} {2} ({3})".format(gparts[0], gparts[2], gparts[3], gamestr['poff'])
