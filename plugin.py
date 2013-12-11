@@ -226,6 +226,8 @@ class Scores(callbacks.Plugin):
                     gparts[2] = gparts[2].replace('<RZ>', self._red('<RZ>')).replace('<>', self._red('<>'))
                 # now bold the leader and format output.
                 gamescore = self._boldleader(gparts[0], gparts[1], gparts[2], gparts[3])
+                # remove if we have a , split and use [0]
+                gparts[4] = gparts[4].split(',')[0]
                 # prepare to output. if we are in a "playoffs" situation (NHL/NBA/MLB)
                 if gamestr['poff']:
                     output = "{0} {1} ({2})".format(gamescore, self._handlestatus(sport, gparts[4]), gamestr['poff'])
