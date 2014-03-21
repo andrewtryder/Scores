@@ -61,6 +61,10 @@ class Scores(callbacks.Plugin):
     def _bu(self, string):
         """Returns a bold/underline string."""
         return ircutils.bold(ircutils.underline(string))
+    
+    def _sf(self, string):
+        """Returns a string with stripped formatting."""
+        return ircutils.stripFormatting(string)
 
     ##############
     # PROCESSING #
@@ -110,9 +114,13 @@ class Scores(callbacks.Plugin):
         """Input away team, away score, home team, home score and bold the leader of the two."""
 
         if int(asc) > int(hsc):  # away winning.
-            return("{0} {1} {2} {3}".format(self._bold(atm), self._bold(asc), htm, hsc))
+            #self.log.info("HOME: {0} {1} {2} {3}".format(atm, asc, htm, hsc))
+            #return("{0} {1} {2} {3}".format(self._bu(atm), self._bu(asc), htm, hsc))
+            return("{0} {1}".format(self._bold(atm + " " + asc), self._sf(htm + " " + hsc)))
         elif int(hsc) > int(asc):  # home winning.
-            return("{0} {1} {2} {3}".format(atm, asc, self._bold(htm), self._bold(hsc)))
+            #self.log.info("AWAY: {0} {1} {2} {3}".format(htm, hsc, atm, asc))
+            return("{0} {1}".format(self._sf(atm + " " + asc), self._bold(htm + " " + hsc)))
+            # return("{0} {1} {2} {3}".format(atm, asc, self._bu(htm), self._bu(hsc)))
         else:  # tied.
             return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
 
