@@ -111,7 +111,7 @@ INSERT INTO teams (sport, full, short) VALUES ('nhl', 'Vancouver Canucks', 'VAN'
 /* MLB */
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'New York Yankees', 'NYY');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Toronto Blue Jays', 'TOR');
-INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Tampa Bay Rays', 'TAM');
+INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Tampa Bay Rays', 'TB');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Chicago White Sox', 'CHW');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Detroit Tigers', 'DET');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Minnesota Twins', 'MIN');
@@ -121,7 +121,7 @@ INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Los Angeles Angels', 'LAA
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Texas Rangers', 'TEX');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Boston Red Sox', 'BOS');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Baltimore Orioles', 'BAL');
-INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Kansas City Royals', 'KAN');
+INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Kansas City Royals', 'KC');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Cleveland Indians', 'CLE');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Cincinnati Reds', 'CIN');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Pittsburgh Pirates', 'PIT');
@@ -131,12 +131,12 @@ INSERT INTO teams (sport, full, short) VALUES ('mlb', 'New York Mets', 'NYM');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Atlanta Braves', 'ATL');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Philadelphia Phillies', 'PHI');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Florida Marlins', 'MIA');
-INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Washington Nationals', 'WAS');
+INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Washington Nationals', 'WSH');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'St. Louis Cardinals', 'STL');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Chicago Cubs', 'CHC');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Arizona Diamondbacks', 'ARI');
-INSERT INTO teams (sport, full, short) VALUES ('mlb', 'San Francisco Giants', 'SFO');
-INSERT INTO teams (sport, full, short) VALUES ('mlb', 'San Diego Padres', 'SDG');
+INSERT INTO teams (sport, full, short) VALUES ('mlb', 'San Francisco Giants', 'SF');
+INSERT INTO teams (sport, full, short) VALUES ('mlb', 'San Diego Padres', 'SD');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Colorado Rockies', 'COL');
 INSERT INTO teams (sport, full, short) VALUES ('mlb', 'Los Angeles Dodgers', 'LAD');
 /* NCF */
