@@ -212,6 +212,14 @@ class Scores(callbacks.Plugin):
         gameslist = []
         # go through each game
         for game in games:
+            # before we _splitevent, some events sometimes have "extra" info. we need to remove this.
+            # <div mode="nowrap" class="ind alt" style="white-space: nowrap;">&nbsp;&nbsp;<b class="red">RZ:</b>1st and 8 at HOU 8</div>
+            bcheck = game.find('b')
+            if bcheck:  # we found bcheck.
+                parentdiv = bcheck.findParent('div')  # find the parent div.
+                if parentdiv:  # make sure we found it.
+                    parentdiv.extract()  # remove.
+            # resume regular ops.
             gamestr = self._splitevent(game.getText())  # convert to text.
             gametext = gamestr['score']  # returns a dict with score and poff.
             if " at " not in gametext:  # game is in-action.
