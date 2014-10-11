@@ -12,7 +12,7 @@ class ScoresTestCase(PluginTestCase):
         #  cfb, cfl, d1bb, golf, mlb, nascar, nba, ncb, ncw, nfl, nhl, racing, tennis, and wnba
         conf.supybot.plugins.Scores.disableANSI.setValue('True')
         self.assertNotError('cfb')
-        self.assertNotError('cfl')
+        # self.assertNotError('cfl')
         self.assertNotError('d1bb')
         self.assertNotError('golf')
         self.assertNotError('mlb')
