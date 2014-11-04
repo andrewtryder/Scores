@@ -29,7 +29,7 @@ INSERT INTO teams (sport, full, short) VALUES ('nba', 'Denver Nuggets', 'DEN');
 INSERT INTO teams (sport, full, short) VALUES ('nba', 'Phoenix Suns', 'PHX');
 INSERT INTO teams (sport, full, short) VALUES ('nba', 'Houston Rockets', 'HOU');
 INSERT INTO teams (sport, full, short) VALUES ('nba', 'Brooklyn Nets', 'BKN');
-INSERT INTO teams (sport, full, short) VALUES ('nba', 'Utah Jazz', 'UTH');
+INSERT INTO teams (sport, full, short) VALUES ('nba', 'Utah Jazz', 'UTAH');
 /* WNBA */
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Tulsa Shock', 'TUL');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Atlanta Dream', 'ATL');
