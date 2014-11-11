@@ -33,16 +33,16 @@ INSERT INTO teams (sport, full, short) VALUES ('nba', 'Utah Jazz', 'UTAH');
 /* WNBA */
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Tulsa Shock', 'TUL');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Atlanta Dream', 'ATL');
-INSERT INTO teams (sport, full, short) VALUES ('wnba', 'New York Liberty', 'NYL');
-INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Connecticut Sun', 'CT');
+INSERT INTO teams (sport, full, short) VALUES ('wnba', 'New York Liberty', 'NY');
+INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Connecticut Sun', 'CONN');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Indiana Fever', 'IND');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'San Antonio Stars', 'SA');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Minnesota Lynx', 'MIN');
-INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Los Angeles Sparks', 'LOS');
+INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Los Angeles Sparks', 'LA');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Seattle Storm', 'SEA');
 INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Chicago Sky', 'CHI');
-INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Phoenix Mercury', 'PHO');
-INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Washington Mystics', 'WAS');
+INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Phoenix Mercury', 'PHX');
+INSERT INTO teams (sport, full, short) VALUES ('wnba', 'Washington Mystics', 'WSH');
 /* NFL */
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Atlanta Falcons', 'ATL');
 INSERT INTO teams (sport, full, short) VALUES ('nfl', 'Detroit Lions', 'DET');
