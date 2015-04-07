@@ -1,11 +1,12 @@
 ###
-# Copyright (c) 2012-2014, spline
+# Copyright (c) 2015, reticulatingspline
 # All rights reserved.
+#
+#
 ###
 
 """
-Add a description of the plugin (to be presented to the user inside the wizard)
-here.  This should describe *what* the plugin does.
+Scores: sports scores
 """
 
 import supybot
@@ -23,17 +24,19 @@ __author__ = supybot.authors.unknown
 __contributors__ = {}
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = '' # 'http://supybot.com/Members/yourname/Scores/download'
+__url__ = ''
 
-import config
-import plugin
+from . import config
+from . import plugin
+from imp import reload
+# In case we're being reloaded.
 reload(config)
-reload(plugin) # In case we're being reloaded.
+reload(plugin)
 # Add more reloads here if you add third-party modules and want them to be
 # reloaded when this plugin is reloaded.  Don't forget to import them as well!
 
 if world.testing:
-    import test
+    from . import test
 
 Class = plugin.Class
 configure = config.configure

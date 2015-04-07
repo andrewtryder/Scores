@@ -1,19 +1,24 @@
 ###
-# Copyright (c) 2012-2014, spline
+# Copyright (c) 2015, reticulatingspline
 # All rights reserved.
+#
+#
 ###
 
-import os
 import supybot.conf as conf
 import supybot.registry as registry
-from supybot.i18n import PluginInternationalization, internationalizeDocstring
-
-_ = PluginInternationalization('Scores')
+try:
+    from supybot.i18n import PluginInternationalization
+    _ = PluginInternationalization('Scores')
+except:
+    # Placeholder that allows to run the plugin on a bot
+    # without the i18n module
+    _ = lambda x: x
 
 
 def configure(advanced):
     # This will be called by supybot to configure this module.  advanced is
-    # a bool that specifies whether the user identified himself as an advanced
+    # a bool that specifies whether the user identified themself as an advanced
     # user or not.  You should effect your configuration by manipulating the
     # registry as appropriate.
     from supybot.questions import expect, anything, something, yn
@@ -21,10 +26,9 @@ def configure(advanced):
 
 
 Scores = conf.registerPlugin('Scores')
-conf.registerChannelValue(Scores, 'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) in output."""))
-conf.registerChannelValue(Scores, 'fullteams', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
-conf.registerChannelValue(Scores, 'lineByLineScores', registry.Boolean(False, """Display full team names in output for channel? (Uses db)"""))
-conf.registerGlobalValue(Scores, 'logURLs', registry.Boolean(False, """Should we log all URL calls?"""))
-conf.registerGlobalValue(Scores, 'wilbonton', registry.Boolean(False, """DONT TURN THIS ON UNLESS YOU KNOW WHAT IT IS."""))
+# This is where your configuration variables (if any) should go.  For example:
+# conf.registerGlobalValue(Scores, 'someConfigVariableName',
+#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
 
-# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
+
+# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

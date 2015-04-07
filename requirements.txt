@@ -1,2 +1,3 @@
 git+https://github.com/ProgVal/Limnoria.git
 BeautifulSoup==3.2.1
+requests==2.7.0
