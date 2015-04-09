@@ -6,6 +6,7 @@
 ###
 import requests
 from bs4 import BeautifulSoup
+import re
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -150,6 +151,37 @@ class Scores(callbacks.Plugin):
         irc.reply("{0}".format(" | ".join(gameslist)))
 
     nhl = wrap(nhl)
+
+    def golf(self, irc, msg, args):
+        """
+        Display Golf Scores.
+        """
+        
+        url = "http://espn.go.com/golf/leaderboard"
+        headers = {'User-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0'}
+        r = requests.get(url, headers=headers)
+        rtext = r.text
+        soup = BeautifulSoup(rtext)
+        # tourney
+        tourney = soup.find('h1', attrs={'class':'tourney-name'}).getText().encode('utf-8')
+        # find the table
+        table = soup.find('table', attrs={'class':re.compile('.*leaderboard.*')})
+        # container
+        o = []
+        rows = table.find('tbody').findAll('tr', attrs={'id':re.compile('.*?player.*?')})
+        # iterate
+        for row in rows:
+            tds = [i.getText() for i in row.findAll('td')]
+            pos = tds[0]
+            plyr = tds[3]
+            score = tds[4]
+            thru = tds[6]
+            out = "{0} {1} {2} {3}".format(pos, plyr, score, thru)
+            o.append(out)
+        # display
+        irc.reply("{0} :: {1}".format(tourney, " | ".join(i for i in o[0:10])))
+        
+    golf = wrap(golf)
 
 
 Class = Scores
