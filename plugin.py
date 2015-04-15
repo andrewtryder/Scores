@@ -7,6 +7,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import datetime
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -26,6 +27,10 @@ class Scores(callbacks.Plugin):
     """sports scores"""
     threaded = True
 
+    def __init__(self, irc):
+        self.__parent = super(Scores, self)
+        self.__parent.__init__(irc)
+        self.DAYS = ['yesterday', 'tonight', 'today', 'tomorrow'] #, 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
     ##############
     # FORMATTING #
@@ -59,6 +64,36 @@ class Scores(callbacks.Plugin):
         """Returns a string with stripped formatting."""
         return ircutils.stripFormatting(string)
 
+    ####################
+    # HELPER FUNCTIONS #
+    ####################
+
+
+    def _datetodatetime(self, optdate):
+        """Convert a string like yesterday to datetime object and return YYYYMMDD string."""
+
+        if optdate == "lastweek":
+            datedelta = -7
+        elif optdate == "yesterday":
+            datedelta = -1
+        elif optdate == "today" or optdate =="tonight":
+            datedelta = 0
+        elif optdate == "tomorrow":
+            datedelta = 1
+        elif optdate == "nextweek":
+            datedelta = 7
+        elif optdate in self.DAYS:  # weekday.
+            weekdaynum = self.DAYS.index(optdate)  # day of the week (index) requested.
+            dayoftheweek = datetime.datetime.now().isoweekday()  # today's day.
+            if weekdaynum >= dayoftheweek:  # if day is ahead but not next week.
+                datedelta = weekdaynum - dayoftheweek  # simple +math.
+            else:
+                datedelta = 7+(weekdaynum-dayoftheweek)  # add in the -dayoftheweek
+        # calculate the datedelta and return a string.
+        datestr = (datetime.date.today() + datetime.timedelta(days=datedelta)).strftime('%Y-%m-%d')
+        # now return.
+        return datestr
+
     def _boldleader(self, atm, asc, htm, hsc):
         """Input away team, away score, home team, home score and bold the leader of the two."""
 
@@ -77,6 +112,17 @@ class Scores(callbacks.Plugin):
         """Fetch and return HTML."""
 
         url = "https://m.yahoo.com/w/sports/%s/scores?.ts=1428390180&.intl=us&.lang=en" % optsport
+        try:
+            headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
+            page = requests.get(url, headers=headers)
+            return page
+        except Exception as e:
+            self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
+            return None
+
+    def _urlfetch(self, url):
+        """Fetch and return HTML."""
+
         try:
             headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
             page = requests.get(url, headers=headers)
@@ -104,21 +150,30 @@ class Scores(callbacks.Plugin):
     # PUBLIC FUNCTIONS (ONE PER SPORT #
     ###################################
 
-    def mlb(self, irc, msg, args):
+    def mlb(self, irc, msg, args, optinput):
         """
         Display MLB scores.
         """
 
-        # first, declare sport.
-        optsport = 'mlb'
+        # check optinput
+        d = None
+        if optinput:
+            optinput = optinput.lower()
+            if optinput in self.DAYS:
+                d = self._datetodatetime(optinput)
+        # url dependent on d
+        if d:
+            url = "https://m.yahoo.com/w/sports/mlb/scores?date=%d&.ts=1429099057&.intl=us&.lang=en" % d
+        else:
+            url = "https://m.yahoo.com/w/sports/mlb/scores?.ts=1428390180&.intl=us&.lang=en"
         # base url.
-        html = self._fetch(optsport)
+        html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    mlb = wrap(mlb)
+    mlb = wrap(mlb, [optional('text')])
 
     def nba(self, irc, msg, args):
         """
