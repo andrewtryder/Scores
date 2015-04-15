@@ -163,7 +163,7 @@ class Scores(callbacks.Plugin):
                 d = self._datetodatetime(optinput)
         # url dependent on d
         if d:
-            url = "https://m.yahoo.com/w/sports/mlb/scores?date=%d&.ts=1429099057&.intl=us&.lang=en" % d
+            url = "https://m.yahoo.com/w/sports/mlb/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
             url = "https://m.yahoo.com/w/sports/mlb/scores?.ts=1428390180&.intl=us&.lang=en"
         # base url.
