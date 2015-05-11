@@ -111,10 +111,10 @@ class Scores(callbacks.Plugin):
     def _fetch(self, optsport):
         """Fetch and return HTML."""
 
-        url = "https://m.yahoo.com/w/sports/%s/scores?.ts=1428390180&.intl=us&.lang=en" % optsport
+        url = "http://m.yahoo.com/w/sports/%s/scores?.ts=1428390180&.intl=us&.lang=en" % optsport
         try:
             headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
-            page = requests.get(url, headers=headers)
+            page = requests.get(url, headers=headers, verify=False)
             return page
         except Exception as e:
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
@@ -125,7 +125,7 @@ class Scores(callbacks.Plugin):
 
         try:
             headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
-            page = requests.get(url, headers=headers)
+            page = requests.get(url, headers=headers, verify=False)
             return page
         except Exception as e:
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
@@ -141,6 +141,7 @@ class Scores(callbacks.Plugin):
         for game in games:
             gametext = game.getText(separator=' ')
             gametext = ' '.join(gametext.split())
+            gametext = gametext.replace('Eastern ', '').replace('Western ', '')
             gametext = gametext.replace(' EDT', '').replace(' pm', '').replace(' am', '')
             gameslist.append(gametext)
         # return the list of games.
@@ -163,9 +164,9 @@ class Scores(callbacks.Plugin):
                 d = self._datetodatetime(optinput)
         # url dependent on d
         if d:
-            url = "https://m.yahoo.com/w/sports/mlb/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
+            url = "http://m.yahoo.com/w/sports/mlb/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
-            url = "https://m.yahoo.com/w/sports/mlb/scores?.ts=1428390180&.intl=us&.lang=en"
+            url = "http://m.yahoo.com/w/sports/mlb/scores?.ts=1428390180&.intl=us&.lang=en"
         # base url.
         html = self._urlfetch(url)
         # container
