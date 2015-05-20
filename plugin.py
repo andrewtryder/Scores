@@ -152,7 +152,7 @@ class Scores(callbacks.Plugin):
     ###################################
 
     def mlb(self, irc, msg, args, optinput):
-        """
+        """[date]
         Display MLB scores.
         """
 
@@ -176,37 +176,53 @@ class Scores(callbacks.Plugin):
 
     mlb = wrap(mlb, [optional('text')])
 
-    def nba(self, irc, msg, args):
-        """
+    def nba(self, irc, msg, args, optinput):
+        """[date]
         Display NBA scores.
         """
 
-        # first, declare sport.
-        optsport = 'nba'
+        # check optinput
+        d = None
+        if optinput:
+            optinput = optinput.lower()
+            if optinput in self.DAYS:
+                d = self._datetodatetime(optinput)
+        if d:
+            url = "http://m.yahoo.com/w/sports/nba/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
+        else:
+            url = "http://m.yahoo.com/w/sports/nba/scores?.ts=1428390180&.intl=us&.lang=en"
         # base url.
-        html = self._fetch(optsport)
+        html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    nba = wrap(nba)
+    nba = wrap(nba, [optional('text')])
 
-    def nhl(self, irc, msg, args):
+    def nhl(self, irc, msg, args, optinput):
         """
         Display NHL scores.
         """
 
-        # first, declare sport.
-        optsport = 'nhl'
+        # check optinput
+        d = None
+        if optinput:
+            optinput = optinput.lower()
+            if optinput in self.DAYS:
+                d = self._datetodatetime(optinput)
+        if d:
+            url = "http://m.yahoo.com/w/sports/nhl/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
+        else:
+            url = "http://m.yahoo.com/w/sports/nhl/scores?.ts=1428390180&.intl=us&.lang=en"
         # base url.
-        html = self._fetch(optsport)
+        html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    nhl = wrap(nhl)
+    nhl = wrap(nhl, [optional('text')])
 
     def golf(self, irc, msg, args):
         """
@@ -228,14 +244,21 @@ class Scores(callbacks.Plugin):
         # iterate
         for row in rows:
             tds = [i.getText() for i in row.findAll('td')]
-            pos = tds[0]
-            plyr = tds[3]
-            score = tds[4]
-            thru = tds[6]
-            out = "{0} {1} {2} {3}".format(pos, plyr, score, thru)
+            if len(tds) == 3:  # tournament not begun yet.
+                cty = tds[0]
+                plyr = tds[1]
+                teetime = tds[2]
+                out = "{0} {1}".format(plyr, teetime)
+            else:  # begun.
+                pos = tds[0]
+                plyr = tds[3]
+                score = tds[4]
+                thru = tds[6]
+                out = "{0} {1} {2} {3}".format(pos, plyr, score, thru)
+            # append.
             o.append(out)
         # display
-        irc.reply("{0} :: {1}".format(tourney, " | ".join(i for i in o[0:10])))
+        irc.reply("{0} :: {1}".format(tourney, " | ".join(i for i in o)))
         
     golf = wrap(golf)
 
