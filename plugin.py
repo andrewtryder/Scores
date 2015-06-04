@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import datetime
+from time import time
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -108,10 +109,13 @@ class Scores(callbacks.Plugin):
         else:  # tied.
             return("{0} {1} {2} {3}".format(atm, asc, htm, hsc))
 
-    def _fetch(self, optsport):
+    def _fetch(self, optsport, date=None):
         """Fetch and return HTML."""
 
-        url = "http://m.yahoo.com/w/sports/%s/scores?.ts=1428390180&.intl=us&.lang=en" % optsport
+        if date:
+            url = "http://m.yahoo.com/w/sports/%s/scores?date=%s&.ts=%s&.intl=us&.lang=en" % (date, optsport, time.time())
+        else:
+            url = "http://m.yahoo.com/w/sports/%s/scores?.ts=%s&.intl=us&.lang=en" % (optsport, time.time())
         try:
             headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/17.0 Firefox/17.0"}
             page = requests.get(url, headers=headers, verify=False)
@@ -130,6 +134,28 @@ class Scores(callbacks.Plugin):
         except Exception as e:
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
             return None
+
+    def _parseline(self, l):
+        # OAK 1 HOU 6 Final
+        # LAD 0 SFO 4 Bot 8
+        # NYR 2 TAM 0 9:15 1st
+        # CHC @ SDG 10:10
+        # MIN 4 PIT 3 Final 13 
+        ls = l.split(' ')  # we split on space.
+        # lets check on the length of the split
+        llen = len(ls)
+        # lets wrap in try except.
+        try:
+            if "@" in l:  # game has not started. return base string.
+                return l
+            elif llen == 5:  # this should match Final but not Final 13 or Final OT
+                # bold the leader and color everything after.
+                return l
+            elif llen == 6:  # this should match an active game.
+                return l
+        except Exception as e:
+            self.log.info("_parseline :: ERROR :: {0}".format(e))
+            return l
 
     def _scores(self, html):
         """Go through each "game" we receive and process the data."""
@@ -150,6 +176,8 @@ class Scores(callbacks.Plugin):
     ###################################
     # PUBLIC FUNCTIONS (ONE PER SPORT #
     ###################################
+    
+    # FUTURE IDEA http://sports.yahoo.com/__xhr/sports/scoreboard/gs/?lid=nhl&week=&date=2015-04-23&phase=&conf=&division=&season=&format=realtime&
 
     def mlb(self, irc, msg, args, optinput):
         """[date]
