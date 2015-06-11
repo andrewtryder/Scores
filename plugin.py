@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import re
 import datetime
 from time import time
+import re
 # supybot libs
 import supybot.utils as utils
 from supybot.commands import *
@@ -161,15 +162,22 @@ class Scores(callbacks.Plugin):
         """Go through each "game" we receive and process the data."""
 
         soup = BeautifulSoup(html)
-        games = soup.findAll('div', attrs={'class':'uip'})
+        games = soup.findAll('div', attrs={'class':'uip'}) # re.compile('^uic$')}) #'uip'})
         gameslist = []
         # go through each game
         for game in games:
+            #self.log.info("{0}".format(game))
             gametext = game.getText(separator=' ')
             gametext = ' '.join(gametext.split())
             gametext = gametext.replace('Eastern ', '').replace('Western ', '')
             gametext = gametext.replace(' EDT', '').replace(' pm', '').replace(' am', '')
-            gameslist.append(gametext)
+            gametext = gametext.strip()
+            #self.log.info("{0}".format(gametext))
+            # some exceptions.
+            if gametext == "Final":
+                continue
+            else:
+                gameslist.append(gametext)
         # return the list of games.
         return gameslist
 
