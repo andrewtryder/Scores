@@ -70,7 +70,6 @@ class Scores(callbacks.Plugin):
     # HELPER FUNCTIONS #
     ####################
 
-
     def _datetodatetime(self, optdate):
         """Convert a string like yesterday to datetime object and return YYYYMMDD string."""
 
@@ -136,12 +135,34 @@ class Scores(callbacks.Plugin):
             self.log.error("ERROR. Could not open {0} message: {1}".format(url, e))
             return None
 
+    def _formatstatus(self, string):
+        """Handle status here."""
+
+        # conditionals for each.
+        if string.startswith('F'):  # Final or F/10. Game is complete.
+            string = string.replace('FINAL', 'F')  # FINAL to F.
+            string = string.replace('Final', 'F')  # Final to F.
+            string = string.replace(' ', '')  # Remove spaces (d1bb).
+            string = self._red(string)
+        # Top/Bot/End/Mid (Game Going on)
+        elif string.startswith('Top ') or string.startswith('Bot ') or string.startswith('End') or string.startswith('Mid') or string.startswith('Bottom '):
+            string = string.replace('Top ', 'T')  # Top to T.
+            string = string.replace('Bottom ', 'B')  # Bottom to B.
+            string = string.replace('Bot ', 'B')  # Bot to B.
+            string = string.replace('End ', 'E')  # End to E.
+            string = string.replace('Mid ', 'M')  # Mid to M.
+            string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
+            string = self._green(string)
+        # Delayed/PPD/Susp s tuff.
+        elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del') or string.startswith('Susp'):  # delayed
+            if string == "PPD":  # PPD is one thing, otherwise..
+                string = self._yellow('PPD')
+            else:  # it can be "DLY: End 5th." or "Susp: Bot 9th". I don't want to do conditionals here.
+                string = self._yellow('DLY')
+        # we don't need an else since it'll just return the string.
+        return string
+
     def _parseline(self, l):
-        # OAK 1 HOU 6 Final
-        # LAD 0 SFO 4 Bot 8
-        # NYR 2 TAM 0 9:15 1st
-        # CHC @ SDG 10:10
-        # MIN 4 PIT 3 Final 13 
         ls = l.split(' ')  # we split on space.
         # lets check on the length of the split
         llen = len(ls)
@@ -149,10 +170,14 @@ class Scores(callbacks.Plugin):
         try:
             if "@" in l:  # game has not started. return base string.
                 return l
-            elif llen == 5:  # this should match Final but not Final 13 or Final OT
+            elif llen == 5 or llen == 6:  # this should match Final but not Final 13 or Final OT
                 # bold the leader and color everything after.
+                bl = self._boldleader(ls[0], ls[1], ls[2], ls[3])
+                status = " ".join(ls[4:])
+                status = self._formatstatus(status)
+                l = "{0} {1}".format(bl, status)
                 return l
-            elif llen == 6:  # this should match an active game.
+            else:
                 return l
         except Exception as e:
             self.log.info("_parseline :: ERROR :: {0}".format(e))
@@ -161,8 +186,9 @@ class Scores(callbacks.Plugin):
     def _scores(self, html):
         """Go through each "game" we receive and process the data."""
 
-        soup = BeautifulSoup(html)
-        games = soup.findAll('div', attrs={'class':'uip'}) # re.compile('^uic$')}) #'uip'})
+        soup = BeautifulSoup(html, from_encoding='utf-8')
+        div = soup.find('div', attrs={'class':'tabContents'})
+        games = div.findAll('div', attrs={'class':'uic'}) 
         gameslist = []
         # go through each game
         for game in games:
@@ -172,11 +198,13 @@ class Scores(callbacks.Plugin):
             gametext = gametext.replace('Eastern ', '').replace('Western ', '')
             gametext = gametext.replace(' EDT', '').replace(' pm', '').replace(' am', '')
             gametext = gametext.strip()
+            gametext = gametext.encode('utf-8')
             #self.log.info("{0}".format(gametext))
             # some exceptions.
-            if gametext == "Final":
+            if gametext == "Final" or gametext == "FINALS":
                 continue
-            else:
+            else:  # try to format.
+                gametext = self._parseline(gametext)
                 gameslist.append(gametext)
         # return the list of games.
         return gameslist
