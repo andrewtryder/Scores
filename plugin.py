@@ -169,6 +169,7 @@ class Scores(callbacks.Plugin):
         # lets wrap in try except.
         try:
             if "@" in l:  # game has not started. return base string.
+                # KAN @ STL Ppd.
                 return l
             elif llen == 5 or llen == 6:  # this should match Final but not Final 13 or Final OT
                 # bold the leader and color everything after.
@@ -187,6 +188,7 @@ class Scores(callbacks.Plugin):
         """Go through each "game" we receive and process the data."""
 
         #soup = BeautifulSoup(html, from_encoding='utf-8')
+        soup = BeautifulSoup(html)
         div = soup.find('div', attrs={'class':'tabContents'})
         games = div.findAll('div', attrs={'class':'uic'}) 
         gameslist = []
