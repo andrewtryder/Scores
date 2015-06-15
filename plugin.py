@@ -155,7 +155,7 @@ class Scores(callbacks.Plugin):
             string = self._green(string)
         # Delayed/PPD/Susp s tuff.
         elif string.startswith('Dly') or string.startswith('Ppd.') or string.startswith('Del') or string.startswith('Susp'):  # delayed
-            if string == "PPD":  # PPD is one thing, otherwise..
+            if string == "Ppd.":  # PPD is one thing, otherwise..
                 string = self._yellow('PPD')
             else:  # it can be "DLY: End 5th." or "Susp: Bot 9th". I don't want to do conditionals here.
                 string = self._yellow('DLY')
@@ -169,7 +169,9 @@ class Scores(callbacks.Plugin):
         # lets wrap in try except.
         try:
             if "@" in l:  # game has not started. return base string.
-                # KAN @ STL Ppd.
+                status = " ".join(ls[3:])
+                status = self._formatstatus(status)
+                l = "{0} {1} {2} {3}".format(ls[0], ls[1], ls[2], status)
                 return l
             elif llen == 5 or llen == 6:  # this should match Final but not Final 13 or Final OT
                 # bold the leader and color everything after.
