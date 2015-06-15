@@ -154,7 +154,7 @@ class Scores(callbacks.Plugin):
             string = string.replace('th', '').replace('nd', '').replace('rd', '').replace('st', '')  # remove endings.
             string = self._green(string)
         # Delayed/PPD/Susp s tuff.
-        elif string.startswith('Dly') or string.startswith('PPD') or string.startswith('Del') or string.startswith('Susp'):  # delayed
+        elif string.startswith('Dly') or string.startswith('Ppd.') or string.startswith('Del') or string.startswith('Susp'):  # delayed
             if string == "PPD":  # PPD is one thing, otherwise..
                 string = self._yellow('PPD')
             else:  # it can be "DLY: End 5th." or "Susp: Bot 9th". I don't want to do conditionals here.
@@ -186,7 +186,7 @@ class Scores(callbacks.Plugin):
     def _scores(self, html):
         """Go through each "game" we receive and process the data."""
 
-        soup = BeautifulSoup(html, from_encoding='utf-8')
+        #soup = BeautifulSoup(html, from_encoding='utf-8')
         div = soup.find('div', attrs={'class':'tabContents'})
         games = div.findAll('div', attrs={'class':'uic'}) 
         gameslist = []
