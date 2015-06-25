@@ -213,6 +213,25 @@ class Scores(callbacks.Plugin):
         # return the list of games.
         return gameslist
 
+    def _findstr(self, scores, inputstring):
+        """
+        A minimal grep for gameslist.
+        """
+
+        # upper our input string because everything is in caps.
+        inputstring = inputstring.upper()
+
+        # list for output.
+        output = []
+
+        for score in scores:
+            if inputstring in score:  # match.
+                output.append(score)
+        # check if nothing matched.
+        if len(output) == 0:
+            output.append("Sorry, I did not find anything matching '{0}'.".format(inputstring))
+
+
     ###################################
     # PUBLIC FUNCTIONS (ONE PER SPORT #
     ###################################
@@ -226,10 +245,13 @@ class Scores(callbacks.Plugin):
 
         # check optinput
         d = None
+        findstr = False
         if optinput:
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            else:
+                findstr = True
         # url dependent on d
         if d:
             url = "http://m.yahoo.com/w/sports/mlb/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
@@ -239,7 +261,10 @@ class Scores(callbacks.Plugin):
         html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
-        # strip color/bold/ansi if option is enabled.
+        # check if we should find a string.
+        if findstr:
+            gameslist = self._findstr(gameslist, optinput)
+        # output.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
     mlb = wrap(mlb, [optional('text')])
@@ -292,6 +317,25 @@ class Scores(callbacks.Plugin):
 
     nhl = wrap(nhl, [optional('text')])
 
+    def cfl(self, irc, msg, args):
+        """
+        Display CFL.
+        """
+
+        url = "http://m.cfl.ca/schedule"
+        headers = {'User-agent': 'Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0; ARM; Touch; NOKIA; Lumia 920)'}
+        r = requests.get(url, headers=headers)
+        rtext = r.content
+        soup = BeautifulSoup(rtext)
+        games = soup.findAll('div', attrs={'data-role':'collapsible'})
+        for game in games[0]:
+            #t = game.find('h1')
+            #s = game.find('span', attrs={'class':re.compile('^status.*')})
+            #irc.reply("{0} {1}".format(t, s))
+            irc.reply("{0}".format(game))
+    
+    cfl = wrap(cfl)
+
     def golf(self, irc, msg, args):
         """
         Display Golf Scores.
@@ -319,14 +363,14 @@ class Scores(callbacks.Plugin):
                 out = "{0} {1}".format(plyr, teetime)
             else:  # begun.
                 pos = tds[0]
-                plyr = tds[3]
+                plyr = self._bold(tds[3])
                 score = tds[4]
                 thru = tds[6]
                 out = "{0} {1} {2} {3}".format(pos, plyr, score, thru)
             # append.
             o.append(out)
         # display
-        irc.reply("{0} :: {1}".format(tourney, " | ".join(i for i in o)))
+        irc.reply("{0} :: {1}".format(self._bu(tourney), " | ".join(i for i in o)))
         
     golf = wrap(golf)
 
