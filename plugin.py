@@ -230,6 +230,8 @@ class Scores(callbacks.Plugin):
         # check if nothing matched.
         if len(output) == 0:
             output.append("Sorry, I did not find anything matching '{0}'.".format(inputstring))
+        # return output
+        return output
 
 
     ###################################
