@@ -324,17 +324,24 @@ class Scores(callbacks.Plugin):
         Display CFL.
         """
 
-        url = "http://m.cfl.ca/schedule"
-        headers = {'User-agent': 'Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0; ARM; Touch; NOKIA; Lumia 920)'}
-        r = requests.get(url, headers=headers)
+        url = "http://www.sportsnet.ca/football/cfl/scores/"
+        r = requests.get(url)
         rtext = r.content
         soup = BeautifulSoup(rtext)
-        games = soup.findAll('div', attrs={'data-role':'collapsible'})
-        for game in games[0]:
-            #t = game.find('h1')
-            #s = game.find('span', attrs={'class':re.compile('^status.*')})
-            #irc.reply("{0} {1}".format(t, s))
-            irc.reply("{0}".format(game))
+        o = []
+        gms = soup.findAll('div', attrs={'class':'accordion-header'})
+        # iterate and clean the string. real basic.
+        for gm in gms:
+            g = gm.getText().encode('utf-8')
+            g = ' '.join(g.split())
+            g = g.replace('Game Preview', '')
+            g = g.strip()
+            o.append(g)
+        # output
+        if len(o) == 0:
+            irc.reply("I didn't find any CFL at {0}".format(url))
+        else:
+            irc.reply("{0}".format(" | ".join([z for z in o])))
     
     cfl = wrap(cfl)
 
