@@ -240,6 +240,37 @@ class Scores(callbacks.Plugin):
     
     # FUTURE IDEA http://sports.yahoo.com/__xhr/sports/scoreboard/gs/?lid=nhl&week=&date=2015-04-23&phase=&conf=&division=&season=&format=realtime&
 
+    def nfl(self, irc, msg, args, optinput):
+        """[date]
+        Display NFL scores.
+        """
+
+        # check optinput
+        d = None
+        findstr = False
+        if optinput:
+            optinput = optinput.lower()
+            if optinput in self.DAYS:
+                d = self._datetodatetime(optinput)
+            else:
+                findstr = True
+        # url dependent on d
+        if d:
+            url = "http://m.yahoo.com/w/sports/nfl/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
+        else:
+            url = "http://m.yahoo.com/w/sports/nfl/scores?.ts=1428390180&.intl=us&.lang=en"
+        # base url.
+        html = self._urlfetch(url)
+        # container
+        gameslist = self._scores(html.text)
+        # check if we should find a string.
+        if findstr:
+            gameslist = self._findstr(gameslist, optinput)
+        # output.
+        irc.reply("{0}".format(" | ".join(gameslist)))
+
+    nfl = wrap(nfl, [optional('text')])
+
     def mlb(self, irc, msg, args, optinput):
         """[date]
         Display MLB scores.
