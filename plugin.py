@@ -192,6 +192,10 @@ class Scores(callbacks.Plugin):
         #soup = BeautifulSoup(html, from_encoding='utf-8')
         soup = BeautifulSoup(html)
         div = soup.find('div', attrs={'class':'tabContents'})
+        if not div:
+            l = []
+            l.append("No games found")
+            return l
         games = div.findAll('div', attrs={'class':'uic'}) 
         gameslist = []
         # go through each game
