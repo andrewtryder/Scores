@@ -330,6 +330,28 @@ class Scores(callbacks.Plugin):
 
     nba = wrap(nba, [optional('text')])
 
+    def cfb(self, irc, msg, args, optinput):
+        """
+        Display CFB scores.
+        """
+
+        # check optinput
+        d = None
+        if optinput:
+            optinput = optinput.lower()
+            if optinput in self.DAYS:
+                d = self._datetodatetime(optinput)
+        if d:
+            url = "http://m.yahoo.com/w/sports/ncaaf/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
+        else:
+            url = "http://m.yahoo.com/w/sports/ncaaf/scores?.ts=1428390180&.intl=us&.lang=en"
+        # base url.
+        html = self._urlfetch(url)
+        # container
+        gameslist = self._scores(html.text)
+
+    cfb  = wrap(cfb, [optional('text')])
+
     def nhl(self, irc, msg, args, optinput):
         """
         Display NHL scores.
