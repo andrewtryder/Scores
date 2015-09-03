@@ -349,6 +349,8 @@ class Scores(callbacks.Plugin):
         html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
+        # strip color/bold/ansi if option is enabled.
+        irc.reply("{0}".format(" | ".join(gameslist)))
 
     cfb  = wrap(cfb, [optional('text')])
 
