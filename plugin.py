@@ -197,8 +197,8 @@ class Scores(callbacks.Plugin):
                                  'WAS': 'WSH'}
         elif sport == 'nhl':
             yahoo_replacement = {'COB': 'CBJ', 'LOS': 'LAK',  'MON': 'MTL', 
-                                 'NAS': 'NSH', 'NJD': 'GNJD', 'PHO': 'ARZ',
-                                 'SAN': 'SJS', 'TAM': 'TBL',  'WAS': 'WSH'}
+                                 'NAS': 'NSH', 'PHO': 'ARZ', 'SAN': 'SJS', 
+                                 'TAM': 'TBL',  'WAS': 'WSH'}
         elif sport == 'nba':
             yahoo_replacement = {'NJN': 'BKN', 'NOR': 'NOP', 'PHO': 'PHX',
                                  'UTH': 'UTA'}
