@@ -186,8 +186,29 @@ class Scores(callbacks.Plugin):
             self.log.info("_parseline :: ERROR :: {0}".format(e))
             return l
 
-    def _scores(self, html):
+    def _scores(self, html, sport=None):
         """Go through each "game" we receive and process the data."""
+
+        # dicts for yahoo translation {'YAHOO': 'CORRECT'}
+        if sport == 'nfl':
+            yahoo_replacement = {'ARI': 'ARZ', 'GNB': 'GB', 'JAC': 'JAX',
+                                 'KAN': 'KC',  'NWE': 'NE', 'NOR': 'NO',
+                                 'SDG': 'SD',  'SFO': 'SF', 'TAM': 'TB',
+                                 'WAS': 'WSH'}
+        elif sport == 'nhl':
+            yahoo_replacement = {'COB': 'CBJ', 'LOS': 'LAK',  'MON': 'MTL', 
+                                 'NAS': 'NSH', 'PHO': 'ARZ', 'SAN': 'SJS', 
+                                 'TAM': 'TBL',  'WAS': 'WSH'}
+        elif sport == 'nba':
+            yahoo_replacement = {'NJN': 'BKN', 'NOR': 'NOP', 'PHO': 'PHX',
+                                 'UTH': 'UTA'}
+        elif sport == 'mlb':
+            yahoo_replacement = {'ARI': 'ARZ', 'CHW': 'CWS', 'KAN': 'KC',
+                                 'SDG': 'SD', 'SFO': 'SF', 'TAM': 'TB'}
+        elif not sport:
+            yahoo_replacement = {}
+        else:
+            yahoo_replacement = {}
 
         #soup = BeautifulSoup(html, from_encoding='utf-8')
         soup = BeautifulSoup(html)
@@ -205,6 +226,7 @@ class Scores(callbacks.Plugin):
             gametext = ' '.join(gametext.split())
             gametext = gametext.replace('Eastern ', '').replace('Western ', '')
             gametext = gametext.replace(' EDT', '').replace(' pm', '').replace(' am', '')
+            gametext = ' '.join(yahoo_replacement.get(y, y) for y in gametext.split())
             gametext = gametext.strip()
             gametext = gametext.encode('utf-8')
             #self.log.info("{0}".format(gametext))
@@ -266,7 +288,7 @@ class Scores(callbacks.Plugin):
         # base url.
         html = self._urlfetch(url)
         # container
-        gameslist = self._scores(html.text)
+        gameslist = self._scores(html.text, 'nfl')
         # check if we should find a string.
         if findstr:
             gameslist = self._findstr(gameslist, optinput)
@@ -297,7 +319,7 @@ class Scores(callbacks.Plugin):
         # base url.
         html = self._urlfetch(url)
         # container
-        gameslist = self._scores(html.text)
+        gameslist = self._scores(html.text, 'mlb')
         # check if we should find a string.
         if findstr:
             gameslist = self._findstr(gameslist, optinput)
@@ -324,7 +346,7 @@ class Scores(callbacks.Plugin):
         # base url.
         html = self._urlfetch(url)
         # container
-        gameslist = self._scores(html.text)
+        gameslist = self._scores(html.text, 'nba')
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
@@ -372,7 +394,7 @@ class Scores(callbacks.Plugin):
         # base url.
         html = self._urlfetch(url)
         # container
-        gameslist = self._scores(html.text)
+        gameslist = self._scores(html.text, 'nhl')
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
