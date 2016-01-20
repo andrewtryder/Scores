@@ -349,6 +349,7 @@ class Scores(callbacks.Plugin):
 
         # check optinput
         d = None
+        findstr = False
         if optinput:
             optinput = optinput.lower()
             if optinput in self.DAYS:
@@ -385,6 +386,7 @@ class Scores(callbacks.Plugin):
 
         # check optinput
         d = None
+        findstr = False
         if optinput:
             optinput = optinput.lower()
             if optinput in self.DAYS:
@@ -421,6 +423,7 @@ class Scores(callbacks.Plugin):
 
         # check optinput
         d = None
+        findstr = False
         if optinput:
             optinput = optinput.lower()
             if optinput in self.DAYS:
