@@ -278,6 +278,13 @@ class Scores(callbacks.Plugin):
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            elif optinput.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
+                    d = optinput
+                except ValueError:
+                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
+                    return
             else:
                 findstr = True
         # url dependent on d
@@ -309,6 +316,13 @@ class Scores(callbacks.Plugin):
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            elif optinput.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
+                    d = optinput
+                except ValueError:
+                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
+                    return
             else:
                 findstr = True
         # url dependent on d
@@ -339,6 +353,15 @@ class Scores(callbacks.Plugin):
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            elif optinput.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
+                    d = optinput
+                except ValueError:
+                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
+                    return
+            else:
+                findstr = True
         if d:
             url = "http://m.yahoo.com/w/sports/nba/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -363,6 +386,15 @@ class Scores(callbacks.Plugin):
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            elif optinput.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
+                    d = optinput
+                except ValueError:
+                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
+                    return
+            else:
+                findstr = True
         if d:
             url = "http://m.yahoo.com/w/sports/ncaaf/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -387,6 +419,15 @@ class Scores(callbacks.Plugin):
             optinput = optinput.lower()
             if optinput in self.DAYS:
                 d = self._datetodatetime(optinput)
+            elif optinput.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
+                    d = optinput
+                except ValueError:
+                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
+                    return
+            else:
+                findstr = True
         if d:
             url = "http://m.yahoo.com/w/sports/nhl/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
