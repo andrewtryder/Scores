@@ -370,6 +370,9 @@ class Scores(callbacks.Plugin):
         html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text, 'nba')
+        # check if we should find a string.
+        if findstr:
+            gameslist = self._findstr(gameslist, optinput)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
@@ -403,6 +406,9 @@ class Scores(callbacks.Plugin):
         html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text)
+        # check if we should find a string.
+        if findstr:
+            gameslist = self._findstr(gameslist, optinput)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
@@ -436,6 +442,9 @@ class Scores(callbacks.Plugin):
         html = self._urlfetch(url)
         # container
         gameslist = self._scores(html.text, 'nhl')
+        # check if we should find a string.
+        if findstr:
+            gameslist = self._findstr(gameslist, optinput)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
