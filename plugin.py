@@ -239,7 +239,7 @@ class Scores(callbacks.Plugin):
         # return the list of games.
         return gameslist
 
-    def _findstr(self, scores, inputstring):
+    def _findstr(self, scores, inputstring, optdate):
         """
         A minimal grep for gameslist.
         """
@@ -251,13 +251,56 @@ class Scores(callbacks.Plugin):
         output = []
 
         for score in scores:
-            if inputstring in score:  # match.
+            if inputstring in score.upper():  # match.
                 output.append(score)
         # check if nothing matched.
         if len(output) == 0:
-            output.append("Sorry, I did not find anything matching '{0}'.".format(inputstring))
+            if optdate:
+                output.append("Sorry, I did not find anything matching '{0}' for {1}.".format(inputstring, optdate))
+            else:
+                output.append("Sorry, I did not find anything matching '{0}' for today.".format(inputstring))
         # return output
         return output
+        
+    def _check_optinput(self, optteam=None, optdate=None):
+        # check input for proper format
+
+        # first check if optteam is really a date
+        if optteam:
+            if optteam.replace('-','').isdigit():
+                if optdate:
+                    if optdate.isalpha():
+                        d = optteam
+                        optteam = optdate
+                        optdate = d
+                else:
+                    optdate = optteam
+                    optteam = None
+            else:
+                if optteam in self.DAYS:
+                    if optdate:
+                        t = optdate
+                        optdate = self._datetodatetime(optteam)
+                        optteam = t
+                    else:
+                        optdate = self._datetodatetime(optteam)
+                        optteam = None
+                elif len(optteam) > 4:
+                    raise ValueError('Usage: [<team>] [<date>]')
+        # next check if a date or date-like string was passed
+        if optdate:
+            optdate = optdate.lower()
+            if optdate in self.DAYS:
+                optdate = self._datetodatetime(optdate)
+            elif optdate.replace('-','').isdigit():
+                try:
+                    datetime.datetime.strptime(optdate, '%Y-%m-%d')
+                except:
+                    raise ValueError('Incorrect date format, should be YYYY-MM-DD')
+            else:
+                return
+
+        return optteam, optdate
 
 
     ###################################
@@ -266,28 +309,19 @@ class Scores(callbacks.Plugin):
     
     # FUTURE IDEA http://sports.yahoo.com/__xhr/sports/scoreboard/gs/?lid=nhl&week=&date=2015-04-23&phase=&conf=&division=&season=&format=realtime&
 
-    def nfl(self, irc, msg, args, optinput):
-        """[date]
-        Display NFL scores.
+    def nfl(self, irc, msg, args, optteam, optdate):
+        """[<team>] [<date>]
+        Display NFL scores. (date and team are optional. If given, date should
+            be in YYYY-MM-DD format)
         """
 
-        # check optinput
-        d = None
-        findstr = False
-        if optinput:
-            optinput = optinput.lower()
-            if optinput in self.DAYS:
-                d = self._datetodatetime(optinput)
-            elif optinput.replace('-','').isdigit():
-                try:
-                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
-                    d = optinput
-                except ValueError:
-                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
-                    return
-            else:
-                findstr = True
-        # url dependent on d
+        # check arguments and formats
+        try:
+            (t, d) = self._check_optinput(optteam, optdate)
+        except ValueError as e:
+            irc.reply('ERROR: {0!s}'.format(e))
+            return
+
         if d:
             url = "http://m.yahoo.com/w/sports/nfl/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -297,34 +331,26 @@ class Scores(callbacks.Plugin):
         # container
         gameslist = self._scores(html.text, 'nfl')
         # check if we should find a string.
-        if findstr:
-            gameslist = self._findstr(gameslist, optinput)
+        if t:
+            gameslist = self._findstr(gameslist, t, d)
         # output.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    nfl = wrap(nfl, [optional('text')])
+    nfl = wrap(nfl, [optional('somethingWithoutSpaces'), optional('somethingWithoutSpaces')])
 
-    def mlb(self, irc, msg, args, optinput):
-        """[date]
-        Display MLB scores.
+    def mlb(self, irc, msg, args, optteam, optdate):
+        """[<team>] [<date>]
+        Display MLB scores. (date and team are optional. If given, date should
+            be in YYYY-MM-DD format)
         """
 
-        # check optinput
-        d = None
-        findstr = False
-        if optinput:
-            optinput = optinput.lower()
-            if optinput in self.DAYS:
-                d = self._datetodatetime(optinput)
-            elif optinput.replace('-','').isdigit():
-                try:
-                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
-                    d = optinput
-                except ValueError:
-                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
-                    return
-            else:
-                findstr = True
+        # check arguments and formats
+        try:
+            (t, d) = self._check_optinput(optteam, optdate)
+        except ValueError as e:
+            irc.reply('ERROR: {0!s}'.format(e))
+            return
+
         # url dependent on d
         if d:
             url = "http://m.yahoo.com/w/sports/mlb/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
@@ -335,34 +361,26 @@ class Scores(callbacks.Plugin):
         # container
         gameslist = self._scores(html.text, 'mlb')
         # check if we should find a string.
-        if findstr:
-            gameslist = self._findstr(gameslist, optinput)
+        if t:
+            gameslist = self._findstr(gameslist, t, d)
         # output.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    mlb = wrap(mlb, [optional('text')])
+    mlb = wrap(mlb, [optional('somethingWithoutSpaces'), optional('somethingWithoutSpaces')])
 
-    def nba(self, irc, msg, args, optinput):
-        """[date]
-        Display NBA scores.
+    def nba(self, irc, msg, args, optteam, optdate):
+        """[<team>] [<date>]
+        Display NBA scores. (date and team are optional. If given, date should
+            be in YYYY-MM-DD format)
         """
 
-        # check optinput
-        d = None
-        findstr = False
-        if optinput:
-            optinput = optinput.lower()
-            if optinput in self.DAYS:
-                d = self._datetodatetime(optinput)
-            elif optinput.replace('-','').isdigit():
-                try:
-                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
-                    d = optinput
-                except ValueError:
-                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
-                    return
-            else:
-                findstr = True
+        # check arguments and formats
+        try:
+            (t, d) = self._check_optinput(optteam, optdate)
+        except ValueError as e:
+            irc.reply('ERROR: {0!s}'.format(e))
+            return
+
         if d:
             url = "http://m.yahoo.com/w/sports/nba/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -372,34 +390,27 @@ class Scores(callbacks.Plugin):
         # container
         gameslist = self._scores(html.text, 'nba')
         # check if we should find a string.
-        if findstr:
-            gameslist = self._findstr(gameslist, optinput)
+        if t:
+            gameslist = self._findstr(gameslist, t, d)
+        #gameslist = self._scores(html.text)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    nba = wrap(nba, [optional('text')])
+    nba = wrap(nba, [optional('somethingWithoutSpaces'), optional('somethingWithoutSpaces')])
 
-    def cfb(self, irc, msg, args, optinput):
+    def cfb(self, irc, msg, args, optteam, optdate):
         """
-        Display CFB scores.
+        Display CFB scores. (date and team are optional. If given, date should
+            be in YYYY-MM-DD format)
         """
 
-        # check optinput
-        d = None
-        findstr = False
-        if optinput:
-            optinput = optinput.lower()
-            if optinput in self.DAYS:
-                d = self._datetodatetime(optinput)
-            elif optinput.replace('-','').isdigit():
-                try:
-                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
-                    d = optinput
-                except ValueError:
-                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
-                    return
-            else:
-                findstr = True
+        # check arguments and formats
+        try:
+            (t, d) = self._check_optinput(optteam, optdate)
+        except ValueError as e:
+            irc.reply('ERROR: {0!s}'.format(e))
+            return
+
         if d:
             url = "http://m.yahoo.com/w/sports/ncaaf/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -407,36 +418,28 @@ class Scores(callbacks.Plugin):
         # base url.
         html = self._urlfetch(url)
         # container
-        gameslist = self._scores(html.text)
+        gameslist = self._scores(html.text, 'cfb')
         # check if we should find a string.
-        if findstr:
-            gameslist = self._findstr(gameslist, optinput)
+        if t:
+            gameslist = self._findstr(gameslist, t, d)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    cfb  = wrap(cfb, [optional('text')])
+    cfb = wrap(cfb, [optional('somethingWithoutSpaces'), optional('somethingWithoutSpaces')])
 
-    def nhl(self, irc, msg, args, optinput):
+    def nhl(self, irc, msg, args, optteam, optdate):
         """
-        Display NHL scores.
+        Display NHL scores. (date and team are optional. If given, date should
+            be in YYYY-MM-DD format)
         """
 
-        # check optinput
-        d = None
-        findstr = False
-        if optinput:
-            optinput = optinput.lower()
-            if optinput in self.DAYS:
-                d = self._datetodatetime(optinput)
-            elif optinput.replace('-','').isdigit():
-                try:
-                    datetime.datetime.strptime(optinput, '%Y-%m-%d')
-                    d = optinput
-                except ValueError:
-                    irc.reply("Incorrect date format, should be YYYY-MM-DD")
-                    return
-            else:
-                findstr = True
+        # check arguments and formats
+        try:
+            (t, d) = self._check_optinput(optteam, optdate)
+        except ValueError as e:
+            irc.reply('ERROR: {0!s}'.format(e))
+            return
+
         if d:
             url = "http://m.yahoo.com/w/sports/nhl/scores?date=%s&.ts=1429099057&.intl=us&.lang=en" % d
         else:
@@ -446,12 +449,12 @@ class Scores(callbacks.Plugin):
         # container
         gameslist = self._scores(html.text, 'nhl')
         # check if we should find a string.
-        if findstr:
-            gameslist = self._findstr(gameslist, optinput)
+        if t:
+            gameslist = self._findstr(gameslist, t, d)
         # strip color/bold/ansi if option is enabled.
         irc.reply("{0}".format(" | ".join(gameslist)))
 
-    nhl = wrap(nhl, [optional('text')])
+    nhl = wrap(nhl, [optional('somethingWithoutSpaces'), optional('somethingWithoutSpaces')])
 
     def cfl(self, irc, msg, args):
         """
