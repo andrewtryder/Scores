@@ -7,6 +7,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import sys
 import datetime
 from time import time
 import re
@@ -228,7 +229,9 @@ class Scores(callbacks.Plugin):
             gametext = gametext.replace(' EDT', '').replace(' pm', '').replace(' am', '')
             gametext = ' '.join(yahoo_replacement.get(y, y) for y in gametext.split())
             gametext = gametext.strip()
-            gametext = gametext.encode('utf-8')
+            gametext = gametext
+            if sys.version_info[0] < 3:
+                gametext = gametext.encode('utf-8')
             #self.log.info("{0}".format(gametext))
             # some exceptions.
             if gametext == "Final" or gametext == "FINALS":
@@ -469,7 +472,9 @@ class Scores(callbacks.Plugin):
         gms = soup.findAll('div', attrs={'class':'accordion-header'})
         # iterate and clean the string. real basic.
         for gm in gms:
-            g = gm.getText().encode('utf-8')
+            g = gm.getText()
+            if sys.version_info[0] < 3:
+                g = g.encode('utf-8')
             g = ' '.join(g.split())
             g = g.replace('Game Preview', '')
             g = g.strip()
